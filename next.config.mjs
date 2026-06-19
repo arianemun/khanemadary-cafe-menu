@@ -1,4 +1,17 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+import createIntlPlugin from "next-intl/plugin";
 
-export default nextConfig;
+const withNextIntl = createIntlPlugin("./i18n/request.ts");
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.hamkari.com",
+      },
+    ],
+  },
+};
+
+export default withNextIntl(nextConfig);

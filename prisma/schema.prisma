@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./cafe.db"
+}
+
+model Category {
+  id           String                @id @default(cuid())
+  slug         String                @unique
+  icon         String?
+  isActive     Boolean               @default(true)
+  sortOrder    Int                   @default(0)
+  createdAt    DateTime              @default(now())
+  items        MenuItem[]
+  translations CategoryTranslation[]
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  language   String
+  name       String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, language])
+}
+
+model MenuItem {
+  id            String            @id @default(cuid())
+  categoryId    String?
+  mainImage     String?
+  galleryImages String            @default("[]")
+  basePrice     Float
+  isActive      Boolean           @default(true)
+  isAvailable   Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  category      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  translations  ItemTranslation[]
+  discounts     Discount[]
+}
+
+model ItemTranslation {
+  id          String   @id @default(cuid())
+  itemId      String
+  language    String
+  name        String
+  description String?
+  ingredients String?
+  item        MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, language])
+}
+
+model Discount {
+  id        String    @id @default(cuid())
+  itemId    String
+  type      String
+  value     Float
+  startDate DateTime?
+  endDate   DateTime?
+  weekdays  String    @default("[]")
+  isActive  Boolean   @default(true)
+  item      MenuItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  image       String?
+  title       String?
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("editor")
+  createdAt DateTime @default(now())
+}

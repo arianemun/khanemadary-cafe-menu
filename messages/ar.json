@@ -1,0 +1,33 @@
+{
+  "common": {
+    "cafeName": "مقهى ساعدي نيا",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "تومان",
+    "add": "إضافة",
+    "close": "إغلاق",
+    "contacts": "طرق التواصل",
+    "contactsEn": "Contacts",
+    "phone": "هاتف",
+    "instagram": "إنستغرام",
+    "open": "المقهى مفتوح",
+    "closed": "المقهى مغلق",
+    "workingHoursNote": "ساعات عمل فرع فرمانية في رمضان",
+    "madeWith": "صُنع بواسطة",
+    "language": "اللغة",
+    "menu": "القائمة",
+    "login": "تسجيل الدخول",
+    "share": "مشاركة",
+    "scrollTop": "العودة للأعلى",
+    "outOfStock": "غير متوفر",
+    "discount": "خصم",
+    "categories": {
+      "hotDrink": "مشروبات ساخنة",
+      "hotChocolate": "شوكولاتة ساخنة",
+      "cakes": "كيك وحلويات",
+      "contacts": "طرق التواصل"
+    }
+  },
+  "welcome": { "message": "مرحباً، أنا المساعد الذكي لمقهى ساعدي نيا" },
+  "maps": { "neshan": "نشان", "balad": "بلد", "google": "خرائط جوجل", "waze": "ويز" },
+  "admin": { "dashboard": "لوحة التحكم", "menu": "إدارة القائمة", "settings": "الإعدادات", "users": "المستخدمون", "login": "دخول الإدارة", "logout": "خروج" }
+}

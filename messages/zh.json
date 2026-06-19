@@ -1,0 +1,33 @@
+{
+  "common": {
+    "cafeName": "Saedinia Cafe",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "托曼",
+    "add": "添加",
+    "close": "关闭",
+    "contacts": "联系方式",
+    "contactsEn": "Contacts",
+    "phone": "电话",
+    "instagram": "Instagram",
+    "open": "咖啡馆营业中",
+    "closed": "咖啡馆已关闭",
+    "workingHoursNote": "拉姆赞月费尔马尼耶分店营业时间",
+    "madeWith": "制作于",
+    "language": "语言",
+    "menu": "菜单",
+    "login": "登录",
+    "share": "分享",
+    "scrollTop": "返回顶部",
+    "outOfStock": "缺货",
+    "discount": "折扣",
+    "categories": {
+      "hotDrink": "热饮",
+      "hotChocolate": "热巧克力",
+      "cakes": "蛋糕和甜点",
+      "contacts": "联系方式"
+    }
+  },
+  "welcome": { "message": "您好，我是 Saedinia 咖啡馆智能助手" },
+  "maps": { "neshan": "Neshan", "balad": "Balad", "google": "谷歌地图", "waze": "Waze" },
+  "admin": { "dashboard": "仪表板", "menu": "菜单管理", "settings": "设置", "users": "用户", "login": "管理登录", "logout": "退出" }
+}

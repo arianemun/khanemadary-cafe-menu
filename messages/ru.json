@@ -1,0 +1,33 @@
+{
+  "common": {
+    "cafeName": "Saedinia Cafe",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "томан",
+    "add": "Добавить",
+    "close": "Закрыть",
+    "contacts": "Контакты",
+    "contactsEn": "Contacts",
+    "phone": "Телефон",
+    "instagram": "Instagram",
+    "open": "Кафе открыто",
+    "closed": "Кафе закрыто",
+    "workingHoursNote": "Часы работы филиала Фармание в Рамадан",
+    "madeWith": "Создано с",
+    "language": "Язык",
+    "menu": "Меню",
+    "login": "Вход",
+    "share": "Поделиться",
+    "scrollTop": "Наверх",
+    "outOfStock": "Нет в наличии",
+    "discount": "Скидка",
+    "categories": {
+      "hotDrink": "Горячие напитки",
+      "hotChocolate": "Горячий шоколад",
+      "cakes": "Торты и сладости",
+      "contacts": "Контакты"
+    }
+  },
+  "welcome": { "message": "Здравствуйте, я умный помощник кафе Saedinia" },
+  "maps": { "neshan": "Neshan", "balad": "Balad", "google": "Google Карты", "waze": "Waze" },
+  "admin": { "dashboard": "Панель", "menu": "Управление меню", "settings": "Настройки", "users": "Пользователи", "login": "Вход в админку", "logout": "Выход" }
+}

@@ -1,0 +1,47 @@
+{
+  "common": {
+    "cafeName": "کافه ساعدی نیا",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "تومان",
+    "add": "افزودن",
+    "close": "بستن",
+    "contacts": "راه‌های ارتباطی",
+    "contactsEn": "Contacts",
+    "phone": "تلفن",
+    "instagram": "اینستاگرام",
+    "open": "کافه باز است",
+    "closed": "کافه بسته است",
+    "workingHoursNote": "ساعات کاری شعبه فرمانیه در ماه رمضان",
+    "madeWith": "ساخته شده با",
+    "language": "زبان",
+    "menu": "منو",
+    "login": "ورود",
+    "share": "اشتراک‌گذاری",
+    "scrollTop": "بازگشت به بالا",
+    "outOfStock": "ناموجود",
+    "discount": "تخفیف",
+    "categories": {
+      "hotDrink": "نوشیدنی گرم",
+      "hotChocolate": "شکلات گرم",
+      "cakes": "کیک و شیرینی",
+      "contacts": "راه‌های ارتباطی"
+    }
+  },
+  "welcome": {
+    "message": "سلام من دستیار هوشمند کافه ساعدی نیا هستم"
+  },
+  "maps": {
+    "neshan": "نشان",
+    "balad": "بلد",
+    "google": "گوگل مپ",
+    "waze": "ویز"
+  },
+  "admin": {
+    "dashboard": "داشبورد",
+    "menu": "مدیریت منو",
+    "settings": "تنظیمات",
+    "users": "کاربران",
+    "login": "ورود به پنل",
+    "logout": "خروج"
+  }
+}

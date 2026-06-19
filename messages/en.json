@@ -1,0 +1,47 @@
+{
+  "common": {
+    "cafeName": "Saedinia Cafe",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "Toman",
+    "add": "Add",
+    "close": "Close",
+    "contacts": "Contacts",
+    "contactsEn": "Contacts",
+    "phone": "Phone",
+    "instagram": "Instagram",
+    "open": "Cafe is open",
+    "closed": "Cafe is closed",
+    "workingHoursNote": "Farmanieh branch hours during Ramadan",
+    "madeWith": "Made with",
+    "language": "Language",
+    "menu": "Menu",
+    "login": "Login",
+    "share": "Share",
+    "scrollTop": "Back to top",
+    "outOfStock": "Out of stock",
+    "discount": "Discount",
+    "categories": {
+      "hotDrink": "Hot Drink",
+      "hotChocolate": "Hot Chocolate",
+      "cakes": "Cakes and Sweets",
+      "contacts": "Contacts"
+    }
+  },
+  "welcome": {
+    "message": "Hello, I am the smart assistant of Saedinia Cafe"
+  },
+  "maps": {
+    "neshan": "Neshan",
+    "balad": "Balad",
+    "google": "Google Maps",
+    "waze": "Waze"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "menu": "Menu Management",
+    "settings": "Settings",
+    "users": "Users",
+    "login": "Admin Login",
+    "logout": "Logout"
+  }
+}

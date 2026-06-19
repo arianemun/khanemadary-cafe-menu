@@ -1,0 +1,33 @@
+{
+  "common": {
+    "cafeName": "Saedinia Cafe",
+    "cafeNameEn": "Saedinia Cafe",
+    "currency": "Toman",
+    "add": "Ekle",
+    "close": "Kapat",
+    "contacts": "İletişim",
+    "contactsEn": "Contacts",
+    "phone": "Telefon",
+    "instagram": "Instagram",
+    "open": "Kafe açık",
+    "closed": "Kafe kapalı",
+    "workingHoursNote": "Ramazan ayında Farmanieh şubesi çalışma saatleri",
+    "madeWith": "İle yapıldı",
+    "language": "Dil",
+    "menu": "Menü",
+    "login": "Giriş",
+    "share": "Paylaş",
+    "scrollTop": "Yukarı",
+    "outOfStock": "Stokta yok",
+    "discount": "İndirim",
+    "categories": {
+      "hotDrink": "Sıcak İçecek",
+      "hotChocolate": "Sıcak Çikolata",
+      "cakes": "Kek ve Tatlılar",
+      "contacts": "İletişim"
+    }
+  },
+  "welcome": { "message": "Merhaba, ben Saedinia Cafe akıllı asistanıyım" },
+  "maps": { "neshan": "Neshan", "balad": "Balad", "google": "Google Haritalar", "waze": "Waze" },
+  "admin": { "dashboard": "Panel", "menu": "Menü Yönetimi", "settings": "Ayarlar", "users": "Kullanıcılar", "login": "Admin Girişi", "logout": "Çıkış" }
+}
