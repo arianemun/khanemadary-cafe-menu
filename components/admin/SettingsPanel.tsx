@@ -53,6 +53,11 @@ import {
   resolveHeroOverlayOpacity,
 } from "@/lib/hero-overlay";
 import {
+  DEFAULT_WORLD_CUP_DATA_URL,
+  DEFAULT_WORLD_CUP_TIMEZONE,
+  normalizeWorldCupSettings,
+} from "@/lib/world-cup-settings";
+import {
   MAX_EVENT_OVERLAY_OPACITY,
   MIN_EVENT_OVERLAY_OPACITY,
   resolveEventOverlayOpacity,
@@ -655,6 +660,7 @@ export function SettingsPanel() {
 
   const general = (settings.general ?? {}) as Record<string, unknown>;
   const hero = (settings.hero ?? {}) as Record<string, unknown>;
+  const worldCup = normalizeWorldCupSettings(settings.worldCup);
   const contact = (settings.contact ?? {}) as Record<string, unknown>;
   const mapsConfig = normalizeMapsSettings(settings.maps);
   const languages = (settings.languages ?? {}) as {
@@ -1153,6 +1159,148 @@ export function SettingsPanel() {
                       </div>
                     </>
                   )}
+                <div className="space-y-4 border-t border-[var(--admin-border)] pt-4">
+                  <div>
+                    <h4 className="text-sm font-semibold">
+                      {i18n("settings.worldCupSection")}
+                    </h4>
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                      {i18n("settings.worldCupSectionDesc")}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <Label>{i18n("settings.worldCupEnabled")}</Label>
+                      <p className="text-xs text-[var(--admin-muted)]">
+                        {i18n("settings.worldCupEnabledDesc")}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={worldCup.enabled}
+                      onCheckedChange={(enabled) =>
+                        save({ worldCup: { ...worldCup, enabled } })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{i18n("settings.worldCupBackgroundStyle")}</Label>
+                    <Select
+                      value={worldCup.backgroundStyle}
+                      onValueChange={(backgroundStyle) =>
+                        save({ worldCup: { ...worldCup, backgroundStyle } })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="glass-black">
+                          {i18n("settings.worldCupBackgroundGlassBlack")}
+                        </SelectItem>
+                        <SelectItem value="glass-white">
+                          {i18n("settings.worldCupBackgroundGlassWhite")}
+                        </SelectItem>
+                        <SelectItem value="white">
+                          {i18n("settings.worldCupBackgroundWhite")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="world-cup-data-url">
+                      {i18n("settings.worldCupDataUrl")}
+                    </Label>
+                    <Input
+                      id="world-cup-data-url"
+                      defaultValue={worldCup.dataUrl}
+                      placeholder={DEFAULT_WORLD_CUP_DATA_URL}
+                      onBlur={(e) =>
+                        save({
+                          worldCup: {
+                            ...worldCup,
+                            dataUrl: e.target.value.trim() || DEFAULT_WORLD_CUP_DATA_URL,
+                          },
+                        })
+                      }
+                    />
+                    <p className="text-xs text-[var(--admin-muted)]">
+                      {i18n("settings.worldCupDataUrlDesc")}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="world-cup-timezone">
+                      {i18n("settings.worldCupTimezone")}
+                    </Label>
+                    <Input
+                      id="world-cup-timezone"
+                      defaultValue={worldCup.timezone}
+                      placeholder={DEFAULT_WORLD_CUP_TIMEZONE}
+                      onBlur={(e) =>
+                        save({
+                          worldCup: {
+                            ...worldCup,
+                            timezone:
+                              e.target.value.trim() || DEFAULT_WORLD_CUP_TIMEZONE,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="world-cup-max-matches">
+                      {i18n("settings.worldCupMaxMatches")}
+                    </Label>
+                    <Input
+                      id="world-cup-max-matches"
+                      type="number"
+                      min={1}
+                      max={10}
+                      defaultValue={worldCup.maxMatches}
+                      onBlur={(e) => {
+                        const parsed = Number(e.target.value);
+                        save({
+                          worldCup: {
+                            ...worldCup,
+                            maxMatches:
+                              Number.isFinite(parsed) && parsed > 0
+                                ? Math.min(10, Math.floor(parsed))
+                                : 5,
+                          },
+                        });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="world-cup-title-fa">
+                        {i18n("settings.worldCupTitleFa")}
+                      </Label>
+                      <Input
+                        id="world-cup-title-fa"
+                        defaultValue={worldCup.titleFa}
+                        onBlur={(e) =>
+                          save({
+                            worldCup: { ...worldCup, titleFa: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="world-cup-title-en">
+                        {i18n("settings.worldCupTitleEn")}
+                      </Label>
+                      <Input
+                        id="world-cup-title-en"
+                        defaultValue={worldCup.titleEn}
+                        onBlur={(e) =>
+                          save({
+                            worldCup: { ...worldCup, titleEn: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
               </section>
             </CardContent>
           </Card>
