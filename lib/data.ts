@@ -21,6 +21,7 @@ import { resolveEventOverlayOpacity } from "./event-overlay";
 import { resolveHeroOverlayOpacity } from "./hero-overlay";
 import { resolveMenuMaxWidth } from "./menu-width";
 import { placeToLocale, type StoredPlace } from "./contact-places";
+import { normalizeWorldCupSettings } from "./world-cup-settings";
 import { normalizeMapsSettings } from "./maps-settings";
 import {
   isCafeOpen,
@@ -208,6 +209,7 @@ export async function getSiteSettings(lang = "fa"): Promise<SiteSettings> {
   const general = (all.general ?? {}) as Record<string, unknown>;
   const contact = (all.contact ?? {}) as Record<string, unknown>;
   const hero = (all.hero ?? {}) as Record<string, unknown>;
+  const worldCup = normalizeWorldCupSettings(all.worldCup);
   const languages = (all.languages ?? {}) as {
     enabled?: Locale[];
     default?: Locale;
@@ -304,6 +306,7 @@ export async function getSiteSettings(lang = "fa"): Promise<SiteSettings> {
     enabledLanguages: languages.enabled ?? ["fa", "en", "ar", "zh", "ru", "tr"],
     defaultLanguage: languages.default ?? "fa",
     maps: normalizeMapsSettings(all.maps),
+    worldCup,
   };
 }
 

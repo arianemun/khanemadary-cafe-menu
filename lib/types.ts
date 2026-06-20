@@ -2,6 +2,7 @@ import type { MapsSettings } from "./maps-settings";
 import type { MenuMaxWidthPreset } from "./menu-width";
 import type { DayScheduleEntry, WorkingHoursConfig } from "./working-hours";
 import type { CategoryItemDisplayMode } from "./category-item-display";
+import type { WorldCupSettings } from "./world-cup-settings";
 
 export type Locale = "fa" | "en" | "ar" | "zh" | "ru" | "tr";
 export type { MenuMaxWidthPreset } from "./menu-width";
@@ -84,6 +85,7 @@ export interface SiteSettings {
   categoryTabsBackground: HeaderBackgroundMode;
   menuMaxWidth: MenuMaxWidthPreset;
   elementBorderRadius: number;
+  worldCup: WorldCupSettings;
 }
 
 export interface EventCard {
