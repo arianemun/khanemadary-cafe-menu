@@ -19,7 +19,8 @@
     "db:seed": "prisma db seed",
     "create-admin": "tsx scripts/create-admin.ts",
     "download-images": "tsx scripts/download-images.ts",
-    "migrate-image-urls": "tsx scripts/migrate-image-urls.ts"
+    "migrate-image-urls": "tsx scripts/migrate-image-urls.ts",
+    "fill-translations": "tsx scripts/fill-translations.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
