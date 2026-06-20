@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { DEFAULT_MENU_COLOR } from "../lib/constants";
 import referenceContent from "../reference-content.json";
 
 const prisma = new PrismaClient();
@@ -112,6 +113,7 @@ async function main() {
       tagline: referenceContent.cafe.tagline,
       welcomeMessageFa: referenceContent.cafe.aiWelcomeMessage,
       welcomeMessageEn: "Hello, I am the smart assistant of Saedinia Cafe",
+      menuColor: DEFAULT_MENU_COLOR,
       announcement: referenceContent.announcement ?? { enabled: false },
     },
     contact: {
@@ -119,27 +121,42 @@ async function main() {
       instagram: referenceContent.links[0]?.value ?? "saediniacafe",
       telegram: "",
       email: "",
-      addressFa: referenceContent.places[0]?.address ?? "",
-      addressEn: referenceContent.places[0]?.address ?? "",
-      places: referenceContent.places,
+      places: referenceContent.places.map((place) => ({
+        ...place,
+        translations: [
+          {
+            language: "fa",
+            title: place.title,
+            address: place.address,
+          },
+          {
+            language: "en",
+            title: place.title,
+            address: place.address,
+          },
+        ],
+      })),
       workingHours: referenceContent.workingHours,
     },
     maps: referenceContent.places.reduce(
       (acc, place) => {
         const [lat, lng] = place.coordinates;
-        acc.google = `https://www.google.com/maps?q=${lat},${lng}`;
-        acc.waze = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
-        acc.neshan = `https://neshan.org/maps/@${lat},${lng},16z`;
-        acc.balad = `https://balad.ir/location?lat=${lat}&lng=${lng}`;
+        acc.urls.google = `https://www.google.com/maps?q=${lat},${lng}`;
+        acc.urls.waze = `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+        acc.urls.neshan = `https://neshan.org/maps/@${lat},${lng},16z`;
+        acc.urls.balad = `https://balad.ir/location?lat=${lat}&lng=${lng}`;
         return acc;
       },
-      { google: "", waze: "", neshan: "", balad: "" } as Record<string, string>
+      {
+        urls: { google: "", waze: "", neshan: "", balad: "" },
+        enabled: ["google", "waze", "neshan", "balad"],
+      } as { urls: Record<string, string>; enabled: string[] }
     ),
     languages: {
       enabled: ["fa", "en", "ar", "zh", "ru", "tr"],
       default: "fa",
     },
-    hero: referenceContent.heroVideo,
+    hero: { ...referenceContent.heroVideo, mediaType: "video" },
   };
 
   for (const [key, value] of Object.entries(settings)) {
