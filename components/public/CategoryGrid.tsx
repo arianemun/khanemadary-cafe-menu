@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { motion } from "framer-motion";
+import { FadeInImage } from "@/components/FadeInImage";
 import type { Category } from "@/lib/types";
 
 interface CategoryGridProps {
@@ -9,48 +8,138 @@ interface CategoryGridProps {
   onSelect: (id: string) => void;
 }
 
-export function CategoryGrid({ categories, onSelect }: CategoryGridProps) {
-  const [main, topRight, bottomRight] = categories;
+interface CategoryTileProps {
+  category: Category;
+  onSelect: (id: string) => void;
+  tall?: boolean;
+  className?: string;
+}
 
-  if (!main) return null;
+function CategoryTile({ category, onSelect, tall = false, className = "" }: CategoryTileProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(category.id)}
+      className={[
+        "group relative flex flex-col overflow-hidden rounded-none bg-muted text-right",
+        "transition-[transform,box-shadow] duration-300 ease-out",
+        "hover:z-10 hover:scale-[1.02] hover:shadow-[0_10px_28px_rgba(0,0,0,0.14)]",
+        "active:scale-[0.99]",
+        tall ? "min-h-[300px] sm:min-h-[340px]" : "min-h-[148px] sm:min-h-[168px]",
+        className,
+      ].join(" ")}
+    >
+      <div className="shrink-0 px-3 pb-1 pt-3">
+        <p
+          className={[
+            "font-bold uppercase tracking-wide text-foreground",
+            tall ? "text-base sm:text-lg" : "text-xs sm:text-sm",
+          ].join(" ")}
+        >
+          {category.nameEn}
+        </p>
+        <p className={tall ? "text-sm text-secondary-text" : "text-xs text-secondary-text"}>
+          {category.name}
+        </p>
+      </div>
+      <div className="relative flex flex-1 items-end justify-center overflow-hidden px-2 pb-2">
+        {category.icon && (
+          <FadeInImage
+            src={category.icon}
+            alt={category.name}
+            width={tall ? 220 : 140}
+            height={tall ? 260 : 120}
+            className={[
+              "h-auto w-auto max-w-[88%] object-contain object-bottom",
+              tall ? "max-h-[220px] sm:max-h-[260px]" : "max-h-[96px] sm:max-h-[110px]",
+            ].join(" ")}
+          />
+        )}
+      </div>
+    </button>
+  );
+}
+
+type MosaicPattern = "tall-left" | "tall-right";
+
+function MosaicRow({
+  tiles,
+  pattern,
+  onSelect,
+}: {
+  tiles: Category[];
+  pattern: MosaicPattern;
+  onSelect: (id: string) => void;
+}) {
+  const [first, second, third] = tiles;
+
+  if (pattern === "tall-left") {
+    return (
+      <div className="grid grid-cols-2 grid-rows-2 gap-0">
+        <CategoryTile
+          category={first}
+          onSelect={onSelect}
+          tall
+          className="col-start-1 row-span-2 row-start-1"
+        />
+        <CategoryTile category={second} onSelect={onSelect} className="col-start-2 row-start-1" />
+        <CategoryTile category={third} onSelect={onSelect} className="col-start-2 row-start-2" />
+      </div>
+    );
+  }
 
   return (
-    <section className="bg-card px-4 py-section">
-      <div className="mx-auto grid max-w-web grid-cols-2 gap-2">
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.98 }}
-          onClick={() => onSelect(main.id)}
-          className="relative col-span-1 row-span-2 min-h-[280px] overflow-hidden rounded-card"
-        >
-          {main.icon && (
-            <Image src={main.icon} alt={main.name} fill className="object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          <div className="absolute bottom-4 right-4 text-right text-white">
-            <p className="text-lg font-bold uppercase tracking-wide">{main.nameEn}</p>
-            <p className="text-sm">{main.name}</p>
+    <div className="grid grid-cols-2 grid-rows-2 gap-0">
+      <CategoryTile category={first} onSelect={onSelect} className="col-start-1 row-start-1" />
+      <CategoryTile category={second} onSelect={onSelect} className="col-start-1 row-start-2" />
+      <CategoryTile
+        category={third}
+        onSelect={onSelect}
+        tall
+        className="col-start-2 row-span-2 row-start-1"
+      />
+    </div>
+  );
+}
+
+function chunkCategories(categories: Category[], size: number): Category[][] {
+  const chunks: Category[][] = [];
+  for (let i = 0; i < categories.length; i += size) {
+    chunks.push(categories.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export function CategoryGrid({ categories, onSelect }: CategoryGridProps) {
+  const visualCategories = categories.filter((category) => category.icon);
+
+  if (visualCategories.length === 0) return null;
+
+  const completeGroups = chunkCategories(visualCategories, 3).filter((group) => group.length === 3);
+  const remainder = visualCategories.slice(completeGroups.length * 3);
+
+  return (
+    <section className="w-full bg-card pt-10">
+      <div className="flex w-full flex-col gap-0">
+        {completeGroups.map((group, index) => (
+          <MosaicRow
+            key={group.map((category) => category.id).join("-")}
+            tiles={group}
+            pattern={index % 2 === 0 ? "tall-left" : "tall-right"}
+            onSelect={onSelect}
+          />
+        ))}
+
+        {remainder.length === 1 && (
+          <CategoryTile category={remainder[0]!} onSelect={onSelect} tall />
+        )}
+
+        {remainder.length === 2 && (
+          <div className="grid grid-cols-2 gap-0">
+            {remainder.map((category) => (
+              <CategoryTile key={category.id} category={category} onSelect={onSelect} />
+            ))}
           </div>
-        </motion.button>
-        {[topRight, bottomRight].map((cat) =>
-          cat ? (
-            <motion.button
-              key={cat.id}
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => onSelect(cat.id)}
-              className="relative min-h-[136px] overflow-hidden rounded-card"
-            >
-              {cat.icon && (
-                <Image src={cat.icon} alt={cat.name} fill className="object-cover" />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute bottom-3 right-3 text-right text-white">
-                <p className="text-sm font-bold uppercase">{cat.nameEn}</p>
-                <p className="text-xs">{cat.name}</p>
-              </div>
-            </motion.button>
-          ) : null
         )}
       </div>
     </section>
