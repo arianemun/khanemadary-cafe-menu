@@ -1,3 +1,5 @@
+export const DEFAULT_MENU_COLOR = "#3f51b5";
+
 export const LANGUAGES = [
   { code: "fa", label: "فارسی" },
   { code: "en", label: "English" },

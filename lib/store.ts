@@ -7,12 +7,12 @@ interface MenuStore {
   setSelectedItem: (item: MenuItem | null) => void;
   activeCategoryId: string | null;
   setActiveCategoryId: (id: string | null) => void;
-  announcementDismissed: boolean;
-  dismissAnnouncement: () => void;
   locale: AppLocale;
   setLocale: (locale: AppLocale) => void;
   navOpen: boolean;
   setNavOpen: (open: boolean) => void;
+  shareOpen: boolean;
+  setShareOpen: (open: boolean) => void;
 }
 
 export const useMenuStore = create<MenuStore>((set) => ({
@@ -20,10 +20,10 @@ export const useMenuStore = create<MenuStore>((set) => ({
   setSelectedItem: (item) => set({ selectedItem: item }),
   activeCategoryId: null,
   setActiveCategoryId: (id) => set({ activeCategoryId: id }),
-  announcementDismissed: false,
-  dismissAnnouncement: () => set({ announcementDismissed: true }),
   locale: "fa",
   setLocale: (locale) => set({ locale }),
   navOpen: false,
   setNavOpen: (open) => set({ navOpen: open }),
+  shareOpen: false,
+  setShareOpen: (open) => set({ shareOpen: open }),
 }));

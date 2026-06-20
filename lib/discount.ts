@@ -69,3 +69,17 @@ export function calculateDiscountedPrice(
   }
   return Math.max(0, Math.round(basePrice - discount.value));
 }
+
+export function getEffectiveDiscountPercent(
+  basePrice: number,
+  discountedPrice: number | null | undefined
+): number | null {
+  if (
+    discountedPrice == null ||
+    discountedPrice >= basePrice ||
+    basePrice <= 0
+  ) {
+    return null;
+  }
+  return Math.round(((basePrice - discountedPrice) / basePrice) * 100);
+}
