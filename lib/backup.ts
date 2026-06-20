@@ -20,7 +20,7 @@ import {
   getDatabaseWalPath,
 } from "@/lib/db-path";
 
-const SQLITE_MAGIC = "SQLite format 3";
+const SQLITE_MAGIC = Buffer.from("SQLite format 3\0", "utf8");
 export const MAX_BACKUP_BYTES = 500 * 1024 * 1024;
 
 export const BACKUP_DB_ENTRY = "cafe.db";
@@ -31,7 +31,7 @@ export function getUploadsPath() {
 }
 
 export function isSqliteBuffer(buffer: Buffer) {
-  return buffer.length >= 16 && buffer.subarray(0, 16).toString("utf8") === SQLITE_MAGIC;
+  return buffer.length >= 16 && buffer.subarray(0, 16).equals(SQLITE_MAGIC);
 }
 
 function isZipBuffer(buffer: Buffer) {
