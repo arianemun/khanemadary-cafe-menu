@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { validateTranslationNames } from "@/lib/admin-validation";
 
 export async function GET(request: Request) {
   const auth = await requireAdmin();
@@ -38,10 +39,16 @@ export async function POST(request: Request) {
     mainImage,
     galleryImages,
     basePrice,
+    preparationMinutes,
     isActive,
     isAvailable,
     translations,
   } = body;
+
+  const missing = validateTranslationNames(translations ?? []);
+  if (missing.length) {
+    return NextResponse.json({ error: "validation", missing }, { status: 400 });
+  }
 
   const maxOrder = await prisma.menuItem.aggregate({ _max: { sortOrder: true } });
 
@@ -51,6 +58,10 @@ export async function POST(request: Request) {
       mainImage: mainImage ?? null,
       galleryImages: JSON.stringify(galleryImages ?? []),
       basePrice: Number(basePrice),
+      preparationMinutes:
+        preparationMinutes != null && preparationMinutes !== ""
+          ? Number(preparationMinutes)
+          : null,
       isActive: isActive ?? true,
       isAvailable: isAvailable ?? true,
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,

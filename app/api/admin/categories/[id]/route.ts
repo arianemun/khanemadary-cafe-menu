@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
+import { validateTranslationNames } from "@/lib/admin-validation";
 
 export async function PUT(
   request: Request,
@@ -11,7 +12,15 @@ export async function PUT(
 
   const { id } = await params;
   const body = await request.json();
-  const { slug, icon, translations, sortOrder } = body;
+  const { slug, icon, translations, sortOrder, isActive, itemDisplayMode, itemDisplayOddBackground } =
+    body;
+
+  if (translations) {
+    const missing = validateTranslationNames(translations);
+    if (missing.length) {
+      return NextResponse.json({ error: "validation", missing }, { status: 400 });
+    }
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.category.update({
@@ -20,6 +29,9 @@ export async function PUT(
         ...(slug !== undefined && { slug }),
         ...(icon !== undefined && { icon }),
         ...(sortOrder !== undefined && { sortOrder }),
+        ...(isActive !== undefined && { isActive }),
+        ...(itemDisplayMode !== undefined && { itemDisplayMode }),
+        ...(itemDisplayOddBackground !== undefined && { itemDisplayOddBackground }),
       },
     });
 

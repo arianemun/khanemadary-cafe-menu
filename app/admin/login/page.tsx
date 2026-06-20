@@ -3,16 +3,24 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAdminT } from "@/lib/admin-i18n";
+import { AdminLocaleSelect } from "@/components/admin/AdminLocaleSelect";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function AdminLoginPage() {
+  const { t } = useAdminT();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setError("");
+    setLoading(true);
 
     const result = await signIn("credentials", {
       email,
@@ -20,8 +28,10 @@ export default function AdminLoginPage() {
       redirect: false,
     });
 
+    setLoading(false);
+
     if (result?.error) {
-      setError("Invalid email or password");
+      setError(t("login.invalidCredentials"));
       return;
     }
 
@@ -30,36 +40,41 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-4 rounded-card bg-card p-6 shadow-card"
-      >
-        <h1 className="text-xl font-bold">Admin Login</h1>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-btn border border-border px-3 py-2"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-btn border border-border px-3 py-2"
-          required
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          className="w-full rounded-btn bg-accent py-2 text-white"
-        >
-          Login
-        </button>
-      </form>
+    <div className="flex min-h-screen items-center justify-center bg-[var(--admin-bg)] p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardTitle>{t("login.title")}</CardTitle>
+          <AdminLocaleSelect triggerClassName="w-[8.5rem]" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("common.email")}</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">{t("common.password")}</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <Button className="w-full" onClick={handleSubmit} disabled={loading}>
+              {loading ? t("login.signingIn") : t("login.login")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

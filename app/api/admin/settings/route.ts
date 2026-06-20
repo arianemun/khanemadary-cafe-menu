@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
@@ -24,6 +25,8 @@ export async function PUT(request: Request) {
       create: { key, value: JSON.stringify(value) },
     });
   }
+
+  revalidatePath("/", "layout");
 
   const settings = await getAllSettings();
   return NextResponse.json(settings);

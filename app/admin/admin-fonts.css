@@ -1,0 +1,84 @@
+/**
+ * Bon (Pro) — commercial font by M.Javad Jalilian / fontiran.com
+ * Webfont files served from /fonts/bon/
+ */
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 50;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Hairline.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Thin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Extralight.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/bon/bon-SemiBold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Extrabold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Bon;
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("/fonts/bon/bon-Black.woff2") format("woff2");
+}

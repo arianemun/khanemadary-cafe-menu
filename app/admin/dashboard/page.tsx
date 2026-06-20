@@ -1,30 +1,44 @@
 import { AdminShell } from "@/components/admin/AdminShell";
+import { DashboardView } from "@/components/admin/DashboardView";
+import { getAllSettings } from "@/lib/data";
 import { prisma } from "@/lib/prisma";
+import {
+  isCafeOpenBySchedule,
+  type WorkingHoursConfig,
+} from "@/lib/working-hours";
 
 export default async function AdminDashboardPage() {
-  const [itemCount, categoryCount, discountCount] = await Promise.all([
-    prisma.menuItem.count(),
-    prisma.category.count(),
-    prisma.discount.count({ where: { isActive: true } }),
-  ]);
+  const [itemCount, categoryCount, discountCount, outOfStockCount, recentItems, allSettings] =
+    await Promise.all([
+      prisma.menuItem.count(),
+      prisma.category.count({ where: { isActive: true } }),
+      prisma.discount.count({ where: { isActive: true } }),
+      prisma.menuItem.count({ where: { isAvailable: false } }),
+      prisma.menuItem.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: { translations: true },
+      }),
+      getAllSettings(),
+    ]);
+
+  const general = (allSettings.general ?? {}) as Record<string, unknown>;
+  const contact = (allSettings.contact ?? {}) as Record<string, unknown>;
+  const rawWorkingHours = (contact.workingHours ?? {}) as WorkingHoursConfig;
+  const forceClosed = general.forceClosed === true;
+  const scheduleOpen = isCafeOpenBySchedule(rawWorkingHours);
 
   return (
     <AdminShell>
-      <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-card bg-card p-4 shadow-card">
-          <div className="text-3xl font-bold">{itemCount}</div>
-          <div className="text-secondary-text">Menu Items</div>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-card">
-          <div className="text-3xl font-bold">{categoryCount}</div>
-          <div className="text-secondary-text">Categories</div>
-        </div>
-        <div className="rounded-card bg-card p-4 shadow-card">
-          <div className="text-3xl font-bold">{discountCount}</div>
-          <div className="text-secondary-text">Active Discounts</div>
-        </div>
-      </div>
+      <DashboardView
+        itemCount={itemCount}
+        categoryCount={categoryCount}
+        discountCount={discountCount}
+        outOfStockCount={outOfStockCount}
+        recentItems={recentItems}
+        forceClosed={forceClosed}
+        scheduleOpen={scheduleOpen}
+      />
     </AdminShell>
   );
 }
