@@ -3,6 +3,7 @@
 import { FadeInImage } from "@/components/FadeInImage";
 import { motion } from "framer-motion";
 import { AnnouncementBanner } from "./AnnouncementBanner";
+import { WorldCupMatchesHero } from "./WorldCupMatchesHero";
 import { heroOverlayOpacityToRgba } from "@/lib/hero-overlay";
 import type { SiteSettings } from "@/lib/types";
 
@@ -41,7 +42,10 @@ export function WelcomeSection({ settings }: WelcomeSectionProps) {
         className="absolute inset-0"
         style={{ backgroundColor: heroOverlayOpacityToRgba(settings.heroOverlayOpacity) }}
       />
-      <div className="absolute inset-0 z-10 mx-auto flex w-full max-w-web flex-col items-stretch px-4 pb-20 pt-4">
+      <div className="absolute inset-0 z-10 mx-auto flex w-full max-w-web flex-col px-4 pb-20 pt-4">
+        <div className="flex w-full flex-1 flex-col items-stretch justify-center">
+          <WorldCupMatchesHero config={settings.worldCup} />
+        </div>
         <div className="mt-auto flex flex-col items-stretch gap-3">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

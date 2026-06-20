@@ -79,5 +79,14 @@
       "fri": "Пятница"
     }
   },
+  "worldCup": {
+    "todayMatches": "Today's matches",
+    "noMatches": "No matches scheduled for today",
+    "live": "Live",
+    "finished": "Full time",
+    "startsIn": "until kickoff",
+    "vs": "vs",
+    "halfTime": "HT"
+  },
   "admin": { "dashboard": "Панель", "menu": "Управление меню", "settings": "Настройки", "users": "Пользователи", "login": "Вход в админку", "logout": "Выход" }
 }

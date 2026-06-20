@@ -81,6 +81,15 @@
       "fri": "Friday"
     }
   },
+  "worldCup": {
+    "todayMatches": "Today's matches",
+    "noMatches": "No matches scheduled for today",
+    "live": "Live",
+    "finished": "Full time",
+    "startsIn": "until kickoff",
+    "vs": "vs",
+    "halfTime": "HT"
+  },
   "admin": {
     "dashboard": "Dashboard",
     "menu": "Menu Management",

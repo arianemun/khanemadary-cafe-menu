@@ -79,5 +79,14 @@
       "fri": "周五"
     }
   },
+  "worldCup": {
+    "todayMatches": "Today's matches",
+    "noMatches": "No matches scheduled for today",
+    "live": "Live",
+    "finished": "Full time",
+    "startsIn": "until kickoff",
+    "vs": "vs",
+    "halfTime": "HT"
+  },
   "admin": { "dashboard": "仪表板", "menu": "菜单管理", "settings": "设置", "users": "用户", "login": "管理登录", "logout": "退出" }
 }

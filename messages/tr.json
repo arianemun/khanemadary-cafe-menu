@@ -79,5 +79,14 @@
       "fri": "Cuma"
     }
   },
+  "worldCup": {
+    "todayMatches": "Today's matches",
+    "noMatches": "No matches scheduled for today",
+    "live": "Live",
+    "finished": "Full time",
+    "startsIn": "until kickoff",
+    "vs": "vs",
+    "halfTime": "HT"
+  },
   "admin": { "dashboard": "Panel", "menu": "Menü Yönetimi", "settings": "Ayarlar", "users": "Kullanıcılar", "login": "Admin Girişi", "logout": "Çıkış" }
 }
