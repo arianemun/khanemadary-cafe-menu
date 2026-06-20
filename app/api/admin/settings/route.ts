@@ -3,6 +3,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getAllSettings } from "@/lib/data";
+import { localeConfigFromSettings } from "@/lib/locale-config";
+import { writeLocaleRuntimeConfig } from "@/lib/locale-config.server";
+
+async function syncLocaleRuntimeConfig(settings: Record<string, unknown>) {
+  if (!("languages" in settings)) return;
+  const languages = settings.languages as
+    | { enabled?: string[]; default?: string }
+    | undefined;
+  writeLocaleRuntimeConfig(localeConfigFromSettings(languages));
+}
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -26,8 +36,10 @@ export async function PUT(request: Request) {
     });
   }
 
+  const settings = await getAllSettings();
+  await syncLocaleRuntimeConfig(settings);
+
   revalidatePath("/", "layout");
 
-  const settings = await getAllSettings();
   return NextResponse.json(settings);
 }

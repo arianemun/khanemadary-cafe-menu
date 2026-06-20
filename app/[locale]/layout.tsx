@@ -15,7 +15,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const settings = await getSiteSettings(locale);
-  return buildSiteMetadata(settings, locale);
+  return buildSiteMetadata(settings);
 }
 
 export function generateStaticParams() {

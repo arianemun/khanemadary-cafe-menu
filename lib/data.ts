@@ -23,6 +23,12 @@ import { resolveMenuMaxWidth } from "./menu-width";
 import { placeToLocale, type StoredPlace } from "./contact-places";
 import { normalizeWorldCupSettings } from "./world-cup-settings";
 import { normalizeMapsSettings } from "./maps-settings";
+import { localeConfigFromSettings } from "./locale-config";
+import {
+  normalizeCafeNameTranslations,
+  normalizeTaglineTranslations,
+  pickBrandTranslation,
+} from "./brand-translations";
 import {
   isCafeOpen,
   normalizeWorkingHoursSchedule,
@@ -210,10 +216,9 @@ export async function getSiteSettings(lang = "fa"): Promise<SiteSettings> {
   const contact = (all.contact ?? {}) as Record<string, unknown>;
   const hero = (all.hero ?? {}) as Record<string, unknown>;
   const worldCup = normalizeWorldCupSettings(all.worldCup);
-  const languages = (all.languages ?? {}) as {
-    enabled?: Locale[];
-    default?: Locale;
-  };
+  const languages = localeConfigFromSettings(
+    all.languages as { enabled?: Locale[]; default?: Locale } | undefined
+  );
   const rawWorkingHours = (contact.workingHours ?? {}) as WorkingHoursConfig & {
     openMessage?: string;
     closedMessage?: string;
@@ -253,18 +258,16 @@ export async function getSiteSettings(lang = "fa"): Promise<SiteSettings> {
 
   const events = await getEvents();
   const announcements = await getAnnouncements(lang);
+  const cafeNameTranslations = normalizeCafeNameTranslations(general);
+  const taglineTranslations = normalizeTaglineTranslations(general);
 
   return {
-    cafeName: (general.cafeName as string) ?? "",
-    cafeNameEn: (general.cafeNameEn as string) ?? "",
+    cafeName: pickBrandTranslation(cafeNameTranslations, lang),
+    cafeNameEn: pickBrandTranslation(cafeNameTranslations, "en"),
     logo: (general.logo as string) ?? "",
     favicon: (general.favicon as string) ?? "",
     menuColor: (general.menuColor as string) || DEFAULT_MENU_COLOR,
-    tagline: (general.tagline as string) ?? "",
-    welcomeMessage:
-      lang === "fa"
-        ? ((general.welcomeMessageFa as string) ?? "")
-        : ((general.welcomeMessageEn as string) ?? ""),
+    tagline: pickBrandTranslation(taglineTranslations, lang),
     phone: (contact.phone as string) ?? "",
     instagram: (contact.instagram as string) ?? "",
     telegram: (contact.telegram as string) ?? "",
@@ -303,8 +306,8 @@ export async function getSiteSettings(lang = "fa"): Promise<SiteSettings> {
     heroOverlayOpacity: resolveHeroOverlayOpacity(hero.overlayOpacity),
     announcements,
     events,
-    enabledLanguages: languages.enabled ?? ["fa", "en", "ar", "zh", "ru", "tr"],
-    defaultLanguage: languages.default ?? "fa",
+    enabledLanguages: languages.enabled,
+    defaultLanguage: languages.default,
     maps: normalizeMapsSettings(all.maps),
     worldCup,
   };

@@ -62,9 +62,11 @@ export function WelcomeSection({ settings }: WelcomeSectionProps) {
             <h1 className="text-2xl font-bold [text-shadow:0_2px_8px_rgba(0,0,0,0.65)]">
               {settings.cafeName}
             </h1>
-            <p className="text-sm opacity-90 [text-shadow:0_1px_4px_rgba(0,0,0,0.65)]">
-              {settings.cafeNameEn}
-            </p>
+            {settings.tagline ? (
+              <p className="text-sm opacity-90 [text-shadow:0_1px_4px_rgba(0,0,0,0.65)]">
+                {settings.tagline}
+              </p>
+            ) : null}
           </motion.div>
           {settings.announcements.length > 0 ? (
             <AnnouncementBanner

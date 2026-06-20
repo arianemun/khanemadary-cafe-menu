@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { DEFAULT_MENU_COLOR } from "../lib/constants";
+import { localeConfigFromSettings } from "../lib/locale-config";
+import { writeLocaleRuntimeConfig } from "../lib/locale-config.server";
 import referenceContent from "../reference-content.json";
 
 const prisma = new PrismaClient();
@@ -109,8 +111,24 @@ async function main() {
     general: {
       cafeName: referenceContent.cafe.name,
       cafeNameEn: referenceContent.cafe.nameEn,
+      cafeNameTranslations: [
+        { language: "fa", value: referenceContent.cafe.name },
+        { language: "en", value: referenceContent.cafe.nameEn },
+        { language: "ar", value: referenceContent.cafe.nameEn },
+        { language: "zh", value: referenceContent.cafe.nameEn },
+        { language: "ru", value: referenceContent.cafe.nameEn },
+        { language: "tr", value: referenceContent.cafe.nameEn },
+      ],
       logo: referenceContent.cafe.logo,
       tagline: referenceContent.cafe.tagline,
+      taglineTranslations: [
+        { language: "fa", value: referenceContent.cafe.tagline },
+        { language: "en", value: referenceContent.cafe.tagline },
+        { language: "ar", value: referenceContent.cafe.tagline },
+        { language: "zh", value: referenceContent.cafe.tagline },
+        { language: "ru", value: referenceContent.cafe.tagline },
+        { language: "tr", value: referenceContent.cafe.tagline },
+      ],
       welcomeMessageFa: referenceContent.cafe.aiWelcomeMessage,
       welcomeMessageEn: "Hello, I am the smart assistant of Saedinia Cafe",
       menuColor: DEFAULT_MENU_COLOR,
@@ -164,6 +182,8 @@ async function main() {
       data: { key, value: JSON.stringify(value) },
     });
   }
+
+  writeLocaleRuntimeConfig(localeConfigFromSettings(settings.languages));
 
   console.log(`Seeded ${rawCategories.length} categories, ${menuItems.length} items`);
 }

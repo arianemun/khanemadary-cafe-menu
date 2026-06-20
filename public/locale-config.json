@@ -1,0 +1,11 @@
+{
+  "default": "fa",
+  "enabled": [
+    "fa",
+    "en",
+    "ar",
+    "zh",
+    "ru",
+    "tr"
+  ]
+}

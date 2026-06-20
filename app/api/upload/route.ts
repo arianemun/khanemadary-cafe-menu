@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { requireAdmin } from "@/lib/admin-auth";
+import { UPLOADS_DIR } from "@/lib/uploads";
 
 export async function POST(request: Request) {
   const auth = await requireAdmin();
@@ -16,12 +17,11 @@ export async function POST(request: Request) {
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadsDir, { recursive: true });
+  await mkdir(UPLOADS_DIR, { recursive: true });
 
   const ext = path.extname(file.name) || ".jpg";
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-  const filepath = path.join(uploadsDir, filename);
+  const filepath = path.join(UPLOADS_DIR, filename);
   await writeFile(filepath, buffer);
 
   return NextResponse.json({ url: `/uploads/${filename}` });

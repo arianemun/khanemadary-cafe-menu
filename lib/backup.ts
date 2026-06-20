@@ -19,6 +19,7 @@ import {
   getDatabaseShmPath,
   getDatabaseWalPath,
 } from "@/lib/db-path";
+import { UPLOADS_DIR } from "@/lib/uploads";
 
 const SQLITE_MAGIC = Buffer.from("SQLite format 3\0", "utf8");
 export const MAX_BACKUP_BYTES = 500 * 1024 * 1024;
@@ -27,7 +28,7 @@ export const BACKUP_DB_ENTRY = "cafe.db";
 export const BACKUP_UPLOADS_ENTRY = "uploads";
 
 export function getUploadsPath() {
-  return path.join(process.cwd(), "public", "uploads");
+  return UPLOADS_DIR;
 }
 
 export function isSqliteBuffer(buffer: Buffer) {

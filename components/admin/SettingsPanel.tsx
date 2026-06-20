@@ -37,6 +37,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DEFAULT_MENU_COLOR, LANGUAGES } from "@/lib/constants";
+import { localeConfigFromSettings } from "@/lib/locale-config";
+import {
+  getAdminBrandLanguages,
+  getBrandTranslationValue,
+  normalizeCafeNameTranslations,
+  normalizeTaglineTranslations,
+  syncLegacyBrandFields,
+  updateBrandTranslation,
+} from "@/lib/brand-translations";
 import {
   DEFAULT_MENU_MAX_WIDTH,
   MENU_MAX_WIDTH_PRESETS,
@@ -508,6 +517,75 @@ function HeroOverlayOpacitySlider({
   );
 }
 
+function normalizeHexColor(value: string): string | null {
+  const trimmed = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed;
+  if (/^[0-9a-fA-F]{6}$/.test(trimmed)) return `#${trimmed}`;
+  return null;
+}
+
+function MenuColorField({
+  value,
+  onSave,
+  label,
+}: {
+  value: string;
+  onSave: (color: string) => void;
+  label: string;
+}) {
+  const [draft, setDraft] = useState(value || DEFAULT_MENU_COLOR);
+
+  useEffect(() => {
+    setDraft(value || DEFAULT_MENU_COLOR);
+  }, [value]);
+
+  const previewColor =
+    normalizeHexColor(draft) ??
+    normalizeHexColor(value) ??
+    DEFAULT_MENU_COLOR;
+  const pickerColor = normalizeHexColor(draft) ?? previewColor;
+
+  const commit = () => {
+    const normalized = normalizeHexColor(draft);
+    if (normalized) {
+      setDraft(normalized);
+      onSave(normalized);
+      return;
+    }
+    setDraft(value || DEFAULT_MENU_COLOR);
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex flex-wrap items-center gap-3">
+        <div
+          className="h-10 w-16 shrink-0 rounded border border-[var(--admin-border)]"
+          style={{ backgroundColor: previewColor }}
+          aria-hidden
+        />
+        <input
+          type="color"
+          value={pickerColor}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          className="h-10 w-16 cursor-pointer rounded border"
+        />
+        <Input
+          className="w-32 font-mono"
+          dir="ltr"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function SettingsPanel() {
   const { t: i18n, locale } = useAdminT();
   const { upload, getUpload, isUploading, isAnyUploading } = useFileUpload();
@@ -663,10 +741,29 @@ export function SettingsPanel() {
   const worldCup = normalizeWorldCupSettings(settings.worldCup);
   const contact = (settings.contact ?? {}) as Record<string, unknown>;
   const mapsConfig = normalizeMapsSettings(settings.maps);
-  const languages = (settings.languages ?? {}) as {
-    enabled?: string[];
-    default?: string;
-  };
+  const languages = localeConfigFromSettings(
+    (settings.languages ?? {}) as { enabled?: string[]; default?: string }
+  );
+  const brandLanguages = getAdminBrandLanguages(languages.enabled);
+  const cafeNameTranslations = normalizeCafeNameTranslations(general);
+  const taglineTranslations = normalizeTaglineTranslations(general);
+
+  function saveBrandTranslations(
+    nextCafeNameTranslations: typeof cafeNameTranslations,
+    nextTaglineTranslations: typeof taglineTranslations
+  ) {
+    save({
+      general: syncLegacyBrandFields({
+        ...general,
+        cafeNameTranslations: nextCafeNameTranslations,
+        taglineTranslations: nextTaglineTranslations,
+      }),
+    });
+  }
+
+  function saveLanguages(next: { enabled: string[]; default: string }) {
+    save({ languages: localeConfigFromSettings(next) });
+  }
   const workingHours = (contact.workingHours ?? {}) as Record<string, unknown>;
   const days = (workingHours.days ?? {}) as Record<string, DayHours>;
   const heroMediaType =
@@ -786,51 +883,81 @@ export function SettingsPanel() {
                   />
                   <p className="text-xs text-[var(--admin-muted)]">{i18n("settings.faviconHint")}</p>
                 </div>
-                <div className="space-y-2">
-                  <Label>{i18n("settings.cafeName")}</Label>
-                  <Input
-                    defaultValue={general.cafeName as string}
-                    className="font-admin-fa"
-                    onBlur={(e) =>
-                      save({ general: { ...general, cafeName: e.target.value } })
-                    }
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <Label>{i18n("settings.cafeName")}</Label>
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                      {i18n("settings.brandTranslationsDesc")}
+                    </p>
+                  </div>
+                  {brandLanguages.map((lang) => (
+                    <div
+                      key={`cafe-name-${lang.code}`}
+                      className="space-y-2 rounded-lg border border-[var(--admin-border)] px-4 py-3"
+                    >
+                      <LanguageLabel code={lang.code} variant="badge" />
+                      <Input
+                        key={`cafe-name-input-${lang.code}-${getBrandTranslationValue(cafeNameTranslations, lang.code)}`}
+                        defaultValue={getBrandTranslationValue(
+                          cafeNameTranslations,
+                          lang.code
+                        )}
+                        className={lang.code === "fa" ? "font-admin-fa" : undefined}
+                        onBlur={(e) =>
+                          saveBrandTranslations(
+                            updateBrandTranslation(
+                              cafeNameTranslations,
+                              lang.code,
+                              e.target.value
+                            ),
+                            taglineTranslations
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <Label>{i18n("settings.welcomeMessage")}</Label>
-                  <Textarea
-                    defaultValue={general.welcomeMessageFa as string}
-                    className="font-admin-fa"
-                    rows={3}
-                    onBlur={(e) =>
-                      save({
-                        general: { ...general, welcomeMessageFa: e.target.value },
-                      })
-                    }
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <Label>{i18n("settings.heroTagline")}</Label>
+                    <p className="mt-1 text-xs text-[var(--admin-muted)]">
+                      {i18n("settings.heroTaglineDesc")}
+                    </p>
+                  </div>
+                  {brandLanguages.map((lang) => (
+                    <div
+                      key={`tagline-${lang.code}`}
+                      className="space-y-2 rounded-lg border border-[var(--admin-border)] px-4 py-3"
+                    >
+                      <LanguageLabel code={lang.code} variant="badge" />
+                      <Input
+                        key={`tagline-input-${lang.code}-${getBrandTranslationValue(taglineTranslations, lang.code)}`}
+                        defaultValue={getBrandTranslationValue(
+                          taglineTranslations,
+                          lang.code
+                        )}
+                        className={lang.code === "fa" ? "font-admin-fa" : undefined}
+                        onBlur={(e) =>
+                          saveBrandTranslations(
+                            cafeNameTranslations,
+                            updateBrandTranslation(
+                              taglineTranslations,
+                              lang.code,
+                              e.target.value
+                            )
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Label>{i18n("settings.menuColor")}</Label>
-                  <input
-                    type="color"
-                    defaultValue={(general.menuColor as string) ?? DEFAULT_MENU_COLOR}
-                    onBlur={(e) =>
-                      save({ general: { ...general, menuColor: e.target.value } })
-                    }
-                    className="h-10 w-16 rounded border"
-                  />
-                  <Input
-                    className="w-28 font-mono"
-                    dir="ltr"
-                    defaultValue={(general.menuColor as string) ?? DEFAULT_MENU_COLOR}
-                    onBlur={(e) => {
-                      const value = e.target.value.trim();
-                      if (/^#[0-9a-fA-F]{6}$/.test(value)) {
-                        save({ general: { ...general, menuColor: value } });
-                      }
-                    }}
-                  />
-                </div>
+                <MenuColorField
+                  label={i18n("settings.menuColor")}
+                  value={(general.menuColor as string) ?? DEFAULT_MENU_COLOR}
+                  onSave={(menuColor) =>
+                    save({ general: { ...general, menuColor } })
+                  }
+                />
               </section>
 
               <section className="space-y-4 border-t border-[var(--admin-border)] pt-6">
@@ -1637,7 +1764,13 @@ export function SettingsPanel() {
 
         {tab === "languages" && (
           <Card>
-            <CardContent className="space-y-4 p-6">
+            <CardContent className="space-y-6 p-6">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{i18n("settings.enabledLanguages")}</p>
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {i18n("settings.enabledLanguagesDesc")}
+                </p>
+              </div>
               {LANGUAGES.map((lang) => (
                 <div
                   key={lang.code}
@@ -1645,42 +1778,57 @@ export function SettingsPanel() {
                 >
                   <LanguageLabel code={lang.code} variant="badge" />
                   <Switch
-                    defaultChecked={
-                      languages.enabled?.includes(lang.code) ?? true
-                    }
+                    checked={languages.enabled.includes(lang.code)}
                     onCheckedChange={(checked) => {
-                      const enabled = new Set(
-                        languages.enabled ?? LANGUAGES.map((l) => l.code)
-                      );
-                      if (checked) enabled.add(lang.code);
-                      else enabled.delete(lang.code);
-                      save({
-                        languages: {
-                          ...languages,
-                          enabled: Array.from(enabled),
-                        },
+                      const enabled = new Set(languages.enabled);
+                      if (checked) {
+                        enabled.add(lang.code);
+                      } else {
+                        if (enabled.size <= 1) {
+                          toast.error(i18n("settings.atLeastOneLanguage"));
+                          return;
+                        }
+                        enabled.delete(lang.code);
+                      }
+
+                      const nextEnabled = Array.from(enabled);
+                      const nextDefault = nextEnabled.includes(languages.default)
+                        ? languages.default
+                        : nextEnabled[0];
+
+                      saveLanguages({
+                        enabled: nextEnabled,
+                        default: nextDefault,
                       });
                     }}
                   />
                 </div>
               ))}
-              <div className="space-y-2">
+              <div className="space-y-2 border-t pt-4">
                 <Label>{i18n("settings.defaultLanguage")}</Label>
+                <p className="text-sm text-[var(--admin-muted)]">
+                  {i18n("settings.defaultLanguageDesc")}
+                </p>
                 <Select
-                  defaultValue={languages.default ?? "fa"}
-                  onValueChange={(v) =>
-                    save({ languages: { ...languages, default: v } })
+                  value={languages.default}
+                  onValueChange={(value) =>
+                    saveLanguages({
+                      enabled: languages.enabled,
+                      default: value,
+                    })
                   }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {LANGUAGES.map((l) => (
-                      <SelectItem key={l.code} value={l.code}>
-                        <LanguageLabel code={l.code} />
-                      </SelectItem>
-                    ))}
+                    {LANGUAGES.filter((lang) => languages.enabled.includes(lang.code)).map(
+                      (lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          <LanguageLabel code={lang.code} />
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
               </div>

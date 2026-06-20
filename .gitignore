@@ -36,6 +36,7 @@ prisma/*.bak
 
 # uploads
 /public/uploads
+/storage/uploads
 
 # vercel
 .vercel

@@ -51,7 +51,6 @@ export interface SiteSettings {
   favicon: string;
   menuColor: string;
   tagline: string;
-  welcomeMessage: string;
   phone: string;
   instagram: string;
   telegram: string;

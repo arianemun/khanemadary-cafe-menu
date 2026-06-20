@@ -15,25 +15,19 @@ export function getMetadataBase(): URL {
 
 type MetadataSettings = Pick<
   SiteSettings,
-  "favicon" | "cafeName" | "cafeNameEn" | "tagline" | "welcomeMessage" | "logo"
+  "favicon" | "cafeName" | "cafeNameEn" | "tagline" | "logo"
 >;
 
 export function getCafeDisplayName(
-  settings: Pick<SiteSettings, "cafeName" | "cafeNameEn">,
-  locale: string
+  settings: Pick<SiteSettings, "cafeName" | "cafeNameEn">
 ): string {
-  const name =
-    locale === "fa"
-      ? settings.cafeName || settings.cafeNameEn
-      : settings.cafeNameEn || settings.cafeName;
-  return name.trim() || FALLBACK_TITLE;
+  return settings.cafeName.trim() || settings.cafeNameEn.trim() || FALLBACK_TITLE;
 }
 
 export function getSiteDescription(
-  settings: Pick<SiteSettings, "tagline" | "welcomeMessage">
+  settings: Pick<SiteSettings, "tagline">
 ): string | undefined {
-  const description =
-    settings.tagline?.trim() || settings.welcomeMessage?.trim();
+  const description = settings.tagline?.trim();
   return description || undefined;
 }
 
@@ -46,11 +40,8 @@ export function buildSiteIcons(favicon?: string): Metadata["icons"] {
   };
 }
 
-export function buildSiteMetadata(
-  settings: MetadataSettings,
-  locale: string
-): Metadata {
-  const title = getCafeDisplayName(settings, locale);
+export function buildSiteMetadata(settings: MetadataSettings): Metadata {
+  const title = getCafeDisplayName(settings);
   const description = getSiteDescription(settings);
   const logo = settings.logo?.trim();
 

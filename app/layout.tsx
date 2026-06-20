@@ -16,7 +16,7 @@ export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings("fa");
-  const title = getCafeDisplayName(settings, "fa");
+  const title = getCafeDisplayName(settings);
   return {
     metadataBase: getMetadataBase(),
     title,
