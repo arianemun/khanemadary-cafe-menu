@@ -120,7 +120,11 @@ function CenterLayout({
       />
       <div className="text-end">
         <ItemTitleRow title={displayName} digitLocale={digitLocale} align="end" />
-        <div className="text-[12px] text-secondary-text">{item.nameEn}</div>
+        {item.ingredients ? (
+          <div className="text-[12px] text-secondary-text whitespace-pre-line">
+            {item.ingredients}
+          </div>
+        ) : null}
       </div>
     </>
   );
@@ -149,7 +153,11 @@ function LineLayout({
     <div className={cn("flex min-w-0 flex-1 flex-col justify-center py-0.5", textAlign)}>
       <ItemTitleRow title={displayName} digitLocale={digitLocale} align={titleAlign} />
       <div className="my-1 h-px w-full bg-border" aria-hidden />
-      <div className="text-[12px] text-secondary-text">{item.nameEn}</div>
+      {item.ingredients ? (
+        <div className="text-[12px] text-secondary-text whitespace-pre-line">
+          {item.ingredients}
+        </div>
+      ) : null}
     </div>
   );
 

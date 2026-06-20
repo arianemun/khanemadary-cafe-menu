@@ -154,8 +154,20 @@
   "discounts": {
     "add": "Add Discount",
     "empty": "No discounts yet",
+    "target": "Applies to",
+    "applyTo": "Apply discount to",
     "selectItem": "Please select an item",
+    "selectItems": "Please select at least one item",
+    "selectCategory": "Please select a category",
     "searchItems": "Search items...",
+    "searchCategories": "Search categories...",
+    "selectedItems": "{count} items selected",
+    "itemsCount": "{count} items",
+    "scope": {
+      "item": "Single item",
+      "items": "Multiple items",
+      "category": "Category"
+    },
     "typePercent": "Percentage %",
     "typeFixed": "Fixed amount (Toman)",
     "scheduleAlways": "Always active",

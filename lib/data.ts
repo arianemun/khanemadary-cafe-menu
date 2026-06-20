@@ -2,6 +2,7 @@ import type { Locale } from "./types";
 import { prisma } from "./prisma";
 import {
   calculateDiscountedPrice,
+  discountAppliesToItem,
   getActiveDiscount,
   normalizeDiscount,
 } from "./discount";
@@ -21,6 +22,7 @@ import { resolveEventOverlayOpacity } from "./event-overlay";
 import { resolveHeroOverlayOpacity } from "./hero-overlay";
 import { resolveMenuMaxWidth } from "./menu-width";
 import { placeToLocale, type StoredPlace } from "./contact-places";
+import { getAnnouncementLocalizedText } from "./announcement-translations";
 import { normalizeWorldCupSettings } from "./world-cup-settings";
 import { normalizeMapsSettings } from "./maps-settings";
 import { localeConfigFromSettings } from "./locale-config";
@@ -29,6 +31,10 @@ import {
   normalizeTaglineTranslations,
   pickBrandTranslation,
 } from "./brand-translations";
+import {
+  getItemEnglishName,
+  getItemLocalizedText,
+} from "./item-translations";
 import {
   isCafeOpen,
   normalizeWorkingHoursSchedule,
@@ -74,23 +80,31 @@ export async function getMenuItems(
   categoryId?: string,
   lang = "fa"
 ): Promise<MenuItem[]> {
-  const rows = await prisma.menuItem.findMany({
-    where: {
-      isActive: true,
-      ...(categoryId ? { categoryId } : {}),
-    },
-    include: {
-      translations: true,
-      discounts: { where: { isActive: true } },
-    },
-    orderBy: { sortOrder: "asc" },
-  });
+  const [rows, allDiscounts] = await Promise.all([
+    prisma.menuItem.findMany({
+      where: {
+        isActive: true,
+        ...(categoryId ? { categoryId } : {}),
+      },
+      include: {
+        translations: true,
+      },
+      orderBy: { sortOrder: "asc" },
+    }),
+    prisma.discount.findMany({
+      where: { isActive: true },
+      include: {
+        items: { select: { itemId: true } },
+      },
+    }),
+  ]);
 
   return rows.map((item) => {
-    const tr = pickTranslation(item.translations, lang);
-    const trEn = pickTranslation(item.translations, "en");
-    const discounts = item.discounts.map(normalizeDiscount);
-    const activeDiscount = getActiveDiscount(discounts);
+    const localized = getItemLocalizedText(item.translations, lang);
+    const applicableDiscounts = allDiscounts
+      .filter((discount) => discountAppliesToItem(discount, item))
+      .map(normalizeDiscount);
+    const activeDiscount = getActiveDiscount(applicableDiscounts);
     const basePrice = item.basePrice;
     const discountedPrice = activeDiscount
       ? calculateDiscountedPrice(basePrice, activeDiscount)
@@ -110,10 +124,10 @@ export async function getMenuItems(
       id: item.id,
       categoryId: item.categoryId ?? "",
       slug: item.id,
-      name: tr?.name ?? "",
-      nameEn: trEn?.name ?? "",
-      description: tr?.description ?? "",
-      ingredients: tr?.ingredients ?? "",
+      name: localized.name,
+      nameEn: getItemEnglishName(item.translations),
+      description: localized.description,
+      ingredients: localized.ingredients,
       price: basePrice,
       preparationMinutes: item.preparationMinutes,
       image: item.mainImage,
@@ -182,25 +196,21 @@ export async function getAnnouncements(lang = "fa"): Promise<AnnouncementCard[]>
   const rows = await prisma.announcement.findMany({
     where: { isActive: true },
     orderBy: { sortOrder: "asc" },
+    include: { translations: true },
   });
-
-  const useFa = lang === "fa" || lang === "ar";
 
   return rows
     .map((row) => {
-      const title = useFa
-        ? (row.titleFa ?? row.titleEn ?? "")
-        : (row.titleEn ?? row.titleFa ?? "");
-      const message = useFa
-        ? (row.messageFa ?? row.messageEn ?? "")
-        : (row.messageEn ?? row.messageFa ?? "");
+      const { title, message } = getAnnouncementLocalizedText(
+        row.translations,
+        lang
+      );
 
       return {
         id: row.id,
         title,
         message,
         image: row.image,
-        color: row.color,
         link: row.link,
         durationSeconds: row.durationSeconds,
         maxDisplayCount: row.maxDisplayCount,

@@ -105,7 +105,6 @@ export interface AnnouncementCard {
   title: string;
   message: string;
   image: string | null;
-  color: string;
   link: string | null;
   durationSeconds: number;
   maxDisplayCount: number;

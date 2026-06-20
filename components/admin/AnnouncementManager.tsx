@@ -21,6 +21,9 @@ import { toast } from "sonner";
 import { LanguageLabel } from "@/components/admin/LanguageLabel";
 import { AdminDigits, AdminNumericInput } from "@/components/admin/AdminDigits";
 import { useAdminT } from "@/lib/admin-i18n";
+import { LANGUAGES } from "@/lib/constants";
+import { getAnnouncementAdminPreviewText } from "@/lib/announcement-translations";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AdminAlertDialogContent,
   AdminDialogContent,
@@ -48,31 +52,37 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type AnnouncementTranslation = {
+  language: string;
+  title: string;
+  message: string;
+};
+
 type AnnouncementRow = {
   id: string;
-  titleFa: string | null;
-  titleEn: string | null;
-  messageFa: string | null;
-  messageEn: string | null;
-  color: string;
   link: string | null;
   durationSeconds: number;
   maxDisplayCount: number;
   isActive: boolean;
   sortOrder: number;
+  translations: AnnouncementTranslation[];
 };
 
 const emptyForm = () => ({
-  titleFa: "",
-  titleEn: "",
-  messageFa: "",
-  messageEn: "",
-  color: "#3F51B5",
+  translations: LANGUAGES.map((lang) => ({
+    language: lang.code,
+    title: "",
+    message: "",
+  })),
   link: "",
   durationSeconds: "10",
   maxDisplayCount: "1",
   isActive: true,
 });
+
+function isRtlLanguage(code: string) {
+  return code === "fa" || code === "ar";
+}
 
 function SortableAnnouncementRow({
   row,
@@ -81,7 +91,7 @@ function SortableAnnouncementRow({
   onDelete,
 }: {
   row: AnnouncementRow;
-  locale: string;
+  locale: "fa" | "en";
   onEdit: (row: AnnouncementRow) => void;
   onDelete: (id: string) => void;
 }) {
@@ -89,14 +99,10 @@ function SortableAnnouncementRow({
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: row.id });
 
-  const title =
-    locale === "fa"
-      ? (row.titleFa ?? row.titleEn ?? "")
-      : (row.titleEn ?? row.titleFa ?? "");
-  const message =
-    locale === "fa"
-      ? (row.messageFa ?? row.messageEn ?? "")
-      : (row.messageEn ?? row.messageFa ?? "");
+  const { title, message } = getAnnouncementAdminPreviewText(
+    row.translations,
+    locale
+  );
 
   return (
     <Card
@@ -157,6 +163,7 @@ export function AnnouncementManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [activeTab, setActiveTab] = useState<string>(LANGUAGES[0].code);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/announcements");
@@ -170,32 +177,39 @@ export function AnnouncementManager() {
   function openCreate() {
     setEditingId(null);
     setForm(emptyForm());
+    setActiveTab(LANGUAGES[0].code);
     setDialogOpen(true);
   }
 
   function openEdit(row: AnnouncementRow) {
     setEditingId(row.id);
     setForm({
-      titleFa: row.titleFa ?? "",
-      titleEn: row.titleEn ?? "",
-      messageFa: row.messageFa ?? "",
-      messageEn: row.messageEn ?? "",
-      color: row.color ?? "#3F51B5",
+      translations: LANGUAGES.map((lang) => {
+        const translation = row.translations.find(
+          (item) => item.language === lang.code
+        );
+        return {
+          language: lang.code,
+          title: translation?.title ?? "",
+          message: translation?.message ?? "",
+        };
+      }),
       link: row.link ?? "",
       durationSeconds: String(row.durationSeconds),
       maxDisplayCount: String(row.maxDisplayCount),
       isActive: row.isActive,
     });
+    setActiveTab(LANGUAGES[0].code);
     setDialogOpen(true);
   }
 
   async function saveAnnouncement() {
     const payload = {
-      titleFa: form.titleFa || null,
-      titleEn: form.titleEn || null,
-      messageFa: form.messageFa || null,
-      messageEn: form.messageEn || null,
-      color: form.color,
+      translations: form.translations.map((row) => ({
+        language: row.language,
+        title: row.title || null,
+        message: row.message || null,
+      })),
       link: form.link || null,
       durationSeconds: Number(form.durationSeconds) || 0,
       maxDisplayCount: Number(form.maxDisplayCount) || 0,
@@ -293,8 +307,8 @@ export function AnnouncementManager() {
       </DndContext>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AdminDialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <AdminDialogContent className="flex max-h-[90vh] flex-col gap-4 overflow-hidden p-4 sm:p-6">
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {i18n(
                 editingId
@@ -303,105 +317,124 @@ export function AnnouncementManager() {
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
+            <div className="space-y-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold">
+                  {i18n("settings.announcementText")}
+                </h3>
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 bg-transparent p-0 sm:grid-cols-3">
+                    {LANGUAGES.map((lang) => (
+                      <TabsTrigger
+                        key={lang.code}
+                        value={lang.code}
+                        className={cn(
+                          "h-auto w-full justify-start rounded-md border border-[var(--admin-border)] bg-[var(--admin-surface)] px-2.5 py-2 shadow-none",
+                          "data-[state=active]:border-[var(--admin-accent)] data-[state=active]:bg-[var(--admin-accent)]/5 data-[state=active]:shadow-none"
+                        )}
+                      >
+                        <LanguageLabel
+                          code={lang.code}
+                          variant="compact"
+                          className="truncate"
+                        />
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {form.translations.map((translation, index) => (
+                    <TabsContent
+                      key={translation.language}
+                      value={translation.language}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <Label>{i18n("settings.announcementTitle")}</Label>
+                        <Input
+                          dir={
+                            isRtlLanguage(translation.language) ? "rtl" : "ltr"
+                          }
+                          className={cn(
+                            "text-start",
+                            isRtlLanguage(translation.language) &&
+                              "font-admin-fa"
+                          )}
+                          value={translation.title}
+                          onChange={(e) => {
+                            const translations = [...form.translations];
+                            translations[index] = {
+                              ...translation,
+                              title: e.target.value,
+                            };
+                            setForm({ ...form, translations });
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{i18n("settings.announcementMessage")}</Label>
+                        <Textarea
+                          dir={
+                            isRtlLanguage(translation.language) ? "rtl" : "ltr"
+                          }
+                          className={cn(
+                            "text-start",
+                            isRtlLanguage(translation.language) &&
+                              "font-admin-fa"
+                          )}
+                          rows={4}
+                          value={translation.message}
+                          onChange={(e) => {
+                            const translations = [...form.translations];
+                            translations[index] = {
+                              ...translation,
+                              message: e.target.value,
+                            };
+                            setForm({ ...form, translations });
+                          }}
+                        />
+                      </div>
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              </div>
+
               <div className="space-y-2">
-                <Label>
-                  <LanguageLabel code="fa" /> — {i18n("settings.announcementTitle")}
-                </Label>
+                <Label>{i18n("settings.linkUrl")}</Label>
                 <Input
-                  value={form.titleFa}
-                  className="font-admin-fa"
-                  onChange={(e) =>
-                    setForm({ ...form, titleFa: e.target.value })
+                  value={form.link}
+                  onChange={(e) => setForm({ ...form, link: e.target.value })}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <AdminNumericInput
+                  label={i18n("settings.announcementDuration")}
+                  hint={i18n("settings.announcementDurationHint")}
+                  value={form.durationSeconds}
+                  onChange={(value) =>
+                    setForm({ ...form, durationSeconds: value })
+                  }
+                />
+                <AdminNumericInput
+                  label={i18n("settings.announcementMaxViews")}
+                  hint={i18n("settings.announcementMaxViewsHint")}
+                  value={form.maxDisplayCount}
+                  onChange={(value) =>
+                    setForm({ ...form, maxDisplayCount: value })
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>
-                  <LanguageLabel code="en" /> — {i18n("settings.announcementTitle")}
-                </Label>
-                <Input
-                  value={form.titleEn}
-                  onChange={(e) =>
-                    setForm({ ...form, titleEn: e.target.value })
-                  }
+
+              <div className="flex items-center justify-between">
+                <Label>{i18n("common.active")}</Label>
+                <Switch
+                  checked={form.isActive}
+                  onCheckedChange={(v) => setForm({ ...form, isActive: v })}
                 />
               </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>
-                  <LanguageLabel code="fa" /> — {i18n("settings.announcementMessage")}
-                </Label>
-                <Textarea
-                  value={form.messageFa}
-                  className="font-admin-fa"
-                  onChange={(e) =>
-                    setForm({ ...form, messageFa: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  <LanguageLabel code="en" /> — {i18n("settings.announcementMessage")}
-                </Label>
-                <Textarea
-                  value={form.messageEn}
-                  onChange={(e) =>
-                    setForm({ ...form, messageEn: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Label>{i18n("settings.bgColor")}</Label>
-              <input
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className="h-10 w-16 rounded border"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>{i18n("settings.linkUrl")}</Label>
-              <Input
-                value={form.link}
-                onChange={(e) => setForm({ ...form, link: e.target.value })}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <AdminNumericInput
-                label={i18n("settings.announcementDuration")}
-                hint={i18n("settings.announcementDurationHint")}
-                value={form.durationSeconds}
-                onChange={(value) =>
-                  setForm({ ...form, durationSeconds: value })
-                }
-              />
-              <AdminNumericInput
-                label={i18n("settings.announcementMaxViews")}
-                hint={i18n("settings.announcementMaxViewsHint")}
-                value={form.maxDisplayCount}
-                onChange={(value) =>
-                  setForm({ ...form, maxDisplayCount: value })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label>{i18n("common.active")}</Label>
-              <Switch
-                checked={form.isActive}
-                onCheckedChange={(v) => setForm({ ...form, isActive: v })}
-              />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {i18n("common.cancel")}
             </Button>

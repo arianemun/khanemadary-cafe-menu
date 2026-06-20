@@ -18,6 +18,7 @@ model Category {
   createdAt             DateTime              @default(now())
   items                 MenuItem[]
   translations          CategoryTranslation[]
+  discounts             Discount[]
 }
 
 model CategoryTranslation {
@@ -43,7 +44,7 @@ model MenuItem {
   createdAt     DateTime          @default(now())
   category      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   translations  ItemTranslation[]
-  discounts     Discount[]
+  discountItems DiscountItem[]
 }
 
 model ItemTranslation {
@@ -59,15 +60,27 @@ model ItemTranslation {
 }
 
 model Discount {
-  id        String    @id @default(cuid())
-  itemId    String
-  type      String
-  value     Float
-  startDate DateTime?
-  endDate   DateTime?
-  weekdays  String    @default("[]")
-  isActive  Boolean   @default(true)
-  item      MenuItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  id         String         @id @default(cuid())
+  scope      String         @default("item")
+  categoryId String?
+  type       String
+  value      Float
+  startDate  DateTime?
+  endDate    DateTime?
+  weekdays   String         @default("[]")
+  isActive   Boolean        @default(true)
+  category   Category?      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  items      DiscountItem[]
+}
+
+model DiscountItem {
+  id         String   @id @default(cuid())
+  discountId String
+  itemId     String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  item       MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([discountId, itemId])
 }
 
 model Setting {
@@ -89,18 +102,25 @@ model Event {
 }
 
 model Announcement {
-  id              String  @id @default(cuid())
-  titleFa         String?
-  titleEn         String?
-  messageFa       String?
-  messageEn       String?
+  id              String                    @id @default(cuid())
   image           String?
-  color           String  @default("#3F51B5")
   link            String?
-  durationSeconds Int     @default(10)
-  maxDisplayCount Int     @default(1)
-  isActive        Boolean @default(true)
-  sortOrder       Int     @default(0)
+  durationSeconds Int                       @default(10)
+  maxDisplayCount Int                       @default(1)
+  isActive        Boolean                   @default(true)
+  sortOrder       Int                       @default(0)
+  translations    AnnouncementTranslation[]
+}
+
+model AnnouncementTranslation {
+  id             String       @id @default(cuid())
+  announcementId String
+  language       String
+  title          String?
+  message        String?
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, language])
 }
 
 model AdminUser {

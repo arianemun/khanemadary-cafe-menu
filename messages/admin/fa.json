@@ -154,8 +154,20 @@
   "discounts": {
     "add": "افزودن تخفیف",
     "empty": "هنوز تخفیفی وجود ندارد",
+    "target": "اعمال روی",
+    "applyTo": "اعمال تخفیف روی",
     "selectItem": "لطفاً یک آیتم انتخاب کنید",
+    "selectItems": "لطفاً حداقل یک آیتم انتخاب کنید",
+    "selectCategory": "لطفاً یک دسته‌بندی انتخاب کنید",
     "searchItems": "جستجوی آیتم...",
+    "searchCategories": "جستجوی دسته‌بندی...",
+    "selectedItems": "{count} آیتم انتخاب شده",
+    "itemsCount": "{count} آیتم",
+    "scope": {
+      "item": "یک آیتم",
+      "items": "چند آیتم",
+      "category": "دسته‌بندی"
+    },
     "typePercent": "درصد %",
     "typeFixed": "مقدار ثابت (تومان)",
     "scheduleAlways": "همیشه فعال",

@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/admin-auth";
 
+type TranslationInput = {
+  language: string;
+  title?: string | null;
+  message?: string | null;
+};
+
+function mapTranslations(translations: TranslationInput[] | undefined) {
+  return (translations ?? []).map((row) => ({
+    language: row.language,
+    title: row.title?.trim() ? row.title.trim() : null,
+    message: row.message?.trim() ? row.message.trim() : null,
+  }));
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -10,19 +24,46 @@ export async function PUT(
   if ("error" in auth) return auth.error;
 
   const body = await request.json();
-  const announcement = await prisma.announcement.update({
+  const { translations, ...rest } = body;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.announcement.update({
+      where: { id: params.id },
+      data: {
+        link: rest.link ?? null,
+        durationSeconds: rest.durationSeconds ?? 10,
+        maxDisplayCount: rest.maxDisplayCount ?? 1,
+        isActive: rest.isActive,
+      },
+    });
+
+    if (translations) {
+      for (const row of mapTranslations(translations)) {
+        await tx.announcementTranslation.upsert({
+          where: {
+            announcementId_language: {
+              announcementId: params.id,
+              language: row.language,
+            },
+          },
+          update: {
+            title: row.title,
+            message: row.message,
+          },
+          create: {
+            announcementId: params.id,
+            language: row.language,
+            title: row.title,
+            message: row.message,
+          },
+        });
+      }
+    }
+  });
+
+  const announcement = await prisma.announcement.findUnique({
     where: { id: params.id },
-    data: {
-      titleFa: body.titleFa ?? null,
-      titleEn: body.titleEn ?? null,
-      messageFa: body.messageFa ?? null,
-      messageEn: body.messageEn ?? null,
-      color: body.color ?? "#3F51B5",
-      link: body.link ?? null,
-      durationSeconds: body.durationSeconds ?? 10,
-      maxDisplayCount: body.maxDisplayCount ?? 1,
-      isActive: body.isActive,
-    },
+    include: { translations: true },
   });
 
   return NextResponse.json(announcement);

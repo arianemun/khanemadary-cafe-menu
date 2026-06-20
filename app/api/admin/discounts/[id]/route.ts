@@ -27,6 +27,14 @@ export async function PUT(
       ...(weekdays !== undefined && { weekdays: JSON.stringify(weekdays) }),
       ...(isActive !== undefined && { isActive }),
     },
+    include: {
+      category: { include: { translations: true } },
+      items: {
+        include: {
+          item: { include: { translations: true } },
+        },
+      },
+    },
   });
 
   return NextResponse.json(discount);

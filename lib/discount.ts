@@ -1,6 +1,9 @@
+export type DiscountScope = "item" | "items" | "category";
+
 export interface DiscountRecord {
   id: string;
-  itemId: string;
+  scope: DiscountScope;
+  categoryId: string | null;
   type: "percentage" | "fixed";
   value: number;
   startDate: Date | null;
@@ -20,7 +23,8 @@ function parseWeekdays(raw: string): number[] {
 
 export function normalizeDiscount(discount: {
   id: string;
-  itemId: string;
+  scope: string;
+  categoryId: string | null;
   type: string;
   value: number;
   startDate: Date | null;
@@ -28,9 +32,14 @@ export function normalizeDiscount(discount: {
   weekdays: string;
   isActive: boolean;
 }): DiscountRecord {
+  const scope = discount.scope as DiscountScope;
   return {
     id: discount.id,
-    itemId: discount.itemId,
+    scope:
+      scope === "items" || scope === "category" || scope === "item"
+        ? scope
+        : "item",
+    categoryId: discount.categoryId,
     type: discount.type as "percentage" | "fixed",
     value: discount.value,
     startDate: discount.startDate,
@@ -38,6 +47,20 @@ export function normalizeDiscount(discount: {
     weekdays: parseWeekdays(discount.weekdays),
     isActive: discount.isActive,
   };
+}
+
+export function discountAppliesToItem(
+  discount: {
+    scope: string;
+    categoryId: string | null;
+    items: { itemId: string }[];
+  },
+  item: { id: string; categoryId: string | null }
+) {
+  if (discount.scope === "category") {
+    return !!item.categoryId && discount.categoryId === item.categoryId;
+  }
+  return discount.items.some((row) => row.itemId === item.id);
 }
 
 export function getActiveDiscount(

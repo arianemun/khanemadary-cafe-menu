@@ -278,9 +278,16 @@ export function MenuItemModal({ settings }: MenuItemModalProps) {
               align="start"
               size="modal"
             />
-            <p className="mt-1 text-[14px] text-secondary-text whitespace-pre-line">
-              {selectedItem.ingredients}
-            </p>
+            {selectedItem.description ? (
+              <p className="mt-2 text-[14px] text-foreground whitespace-pre-line">
+                {selectedItem.description}
+              </p>
+            ) : null}
+            {selectedItem.ingredients ? (
+              <p className="mt-1 text-[14px] text-secondary-text whitespace-pre-line">
+                {selectedItem.ingredients}
+              </p>
+            ) : null}
             <div className="mt-4 flex items-center justify-between">
               <span className="flex items-center gap-1 text-base font-bold">
                 {price != null && formatPrice(price)}

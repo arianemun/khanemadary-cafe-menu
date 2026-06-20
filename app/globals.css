@@ -167,6 +167,10 @@ html:has([data-public-menu]) body::-webkit-scrollbar {
   .animate-heartbeat {
     animation: heartbeat 1.2s ease-in-out infinite;
   }
+
+  .admin-date-picker .rmdp-wrapper {
+    z-index: 200;
+  }
 }
 
 /* Public menu toasts (Sonner portals to body; override default system font) */

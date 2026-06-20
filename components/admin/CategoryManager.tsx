@@ -141,9 +141,9 @@ function SortableCategoryRow({
         <div className="hidden text-xs text-[var(--admin-muted)] sm:block">{category.slug}</div>
       </TableCell>
       <TableCell className="hidden md:table-cell">
-        <Badge variant="outline">
-          <AdminDigits>{category._count?.items ?? 0}</AdminDigits>{" "}
-          {i18n("common.items")}
+        <Badge variant="outline" className="gap-1">
+          <AdminDigits>{category._count?.items ?? 0}</AdminDigits>
+          <span>{i18n("common.items")}</span>
         </Badge>
       </TableCell>
       <TableCell className="hidden sm:table-cell">

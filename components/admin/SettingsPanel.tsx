@@ -97,7 +97,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AdminTimePicker } from "@/components/admin/AdminTimePicker";
-import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
+import {
+  AdminDatePicker,
+  dateToLocalInputValue,
+} from "@/components/admin/AdminDatePicker";
 import {
   AdminLocaleDigitInput,
   AdminLocaleDigitTextarea,
@@ -183,7 +186,7 @@ function toDateInputValue(value: string | null) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
+  return dateToLocalInputValue(date);
 }
 
 function formatEventDateRange(
@@ -539,11 +542,10 @@ function MenuColorField({
     setDraft(value || DEFAULT_MENU_COLOR);
   }, [value]);
 
-  const previewColor =
+  const pickerColor =
     normalizeHexColor(draft) ??
     normalizeHexColor(value) ??
     DEFAULT_MENU_COLOR;
-  const pickerColor = normalizeHexColor(draft) ?? previewColor;
 
   const commit = () => {
     const normalized = normalizeHexColor(draft);
@@ -559,17 +561,16 @@ function MenuColorField({
     <div className="space-y-2">
       <Label>{label}</Label>
       <div className="flex flex-wrap items-center gap-3">
-        <div
-          className="h-10 w-16 shrink-0 rounded border border-[var(--admin-border)]"
-          style={{ backgroundColor: previewColor }}
-          aria-hidden
-        />
         <input
           type="color"
           value={pickerColor}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          className="h-10 w-16 cursor-pointer rounded border"
+          onChange={(e) => {
+            const color = e.target.value;
+            setDraft(color);
+            onSave(color);
+          }}
+          className="h-10 w-16 cursor-pointer rounded border border-[var(--admin-border)]"
+          aria-label={label}
         />
         <Input
           className="w-32 font-mono"
@@ -1523,16 +1524,6 @@ export function SettingsPanel() {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>{i18n("common.email")}</Label>
-                  <Input
-                    type="email"
-                    defaultValue={contact.email as string}
-                    onBlur={(e) =>
-                      save({ contact: { ...contact, email: e.target.value } })
-                    }
-                  />
-                </div>
               </section>
 
               <section className="space-y-4 border-t border-[var(--admin-border)] pt-6">
@@ -1844,74 +1835,126 @@ export function SettingsPanel() {
           else setEventDialog(true);
         }}
       >
-        <AdminDialogContent className="max-h-[min(90vh,820px)] overflow-y-auto">
+        <AdminDialogContent className="max-h-none gap-3 overflow-visible p-4 sm:max-w-2xl sm:p-5">
           <DialogHeader>
             <DialogTitle>
               {editingEventId ? i18n("settings.editEvent") : i18n("settings.addEvent")}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{i18n("settings.eventTitle")}</Label>
-              <Input
-                placeholder={i18n("settings.eventTitle")}
-                value={eventForm.title}
-                className={locale === "fa" ? "font-admin-fa" : undefined}
-                onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{i18n("settings.eventDescription")}</Label>
-              {locale === "fa" ? (
-                <AdminLocaleDigitTextarea
-                  key={`event-desc-${editingEventId ?? "new"}`}
-                  placeholder={i18n("settings.eventDescription")}
-                  rows={4}
-                  dir="rtl"
-                  className="text-start"
-                  value={eventForm.description}
-                  onSave={(description) =>
-                    setEventForm((prev) => ({ ...prev, description }))
-                  }
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>{i18n("settings.eventTitle")}</Label>
+                <Input
+                  placeholder={i18n("settings.eventTitle")}
+                  value={eventForm.title}
+                  className={locale === "fa" ? "font-admin-fa" : undefined}
+                  onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
                 />
-              ) : (
-                <Textarea
-                  placeholder={i18n("settings.eventDescription")}
-                  value={eventForm.description}
-                  rows={4}
-                  className="text-start"
+              </div>
+              <div className="space-y-1.5">
+                <Label>{i18n("settings.eventDescription")}</Label>
+                {locale === "fa" ? (
+                  <AdminLocaleDigitTextarea
+                    key={`event-desc-${editingEventId ?? "new"}`}
+                    placeholder={i18n("settings.eventDescription")}
+                    rows={2}
+                    dir="rtl"
+                    className="min-h-0 text-start"
+                    value={eventForm.description}
+                    onSave={(description) =>
+                      setEventForm((prev) => ({ ...prev, description }))
+                    }
+                  />
+                ) : (
+                  <Textarea
+                    placeholder={i18n("settings.eventDescription")}
+                    value={eventForm.description}
+                    rows={2}
+                    className="min-h-0 text-start"
+                    onChange={(e) =>
+                      setEventForm({ ...eventForm, description: e.target.value })
+                    }
+                  />
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label>{i18n("settings.eventStartDate")}</Label>
+                  <AdminDatePicker
+                    value={eventForm.startDate}
+                    placeholder={i18n("settings.eventStartDate")}
+                    onChange={(startDate) => setEventForm({ ...eventForm, startDate })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{i18n("settings.eventEndDate")}</Label>
+                  <AdminDatePicker
+                    value={eventForm.endDate}
+                    placeholder={i18n("settings.eventEndDate")}
+                    onChange={(endDate) => setEventForm({ ...eventForm, endDate })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5 rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="event-overlay-opacity" className="text-xs">
+                    {i18n("settings.eventOverlayOpacity")}
+                  </Label>
+                  <span className="text-xs text-[var(--admin-muted)]">
+                    {formatAdminDigits(String(eventForm.overlayOpacity), locale)}%
+                  </span>
+                </div>
+                <input
+                  id="event-overlay-opacity"
+                  type="range"
+                  min={MIN_EVENT_OVERLAY_OPACITY}
+                  max={MAX_EVENT_OVERLAY_OPACITY}
+                  step={1}
+                  value={eventForm.overlayOpacity}
                   onChange={(e) =>
-                    setEventForm({ ...eventForm, description: e.target.value })
+                    setEventForm({
+                      ...eventForm,
+                      overlayOpacity: resolveEventOverlayOpacity(Number(e.target.value)),
+                    })
                   }
+                  className="w-full accent-[var(--admin-primary)]"
                 />
-              )}
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                <Label htmlFor="event-form-active">{i18n("common.active")}</Label>
+                <Switch
+                  id="event-form-active"
+                  checked={eventForm.isActive}
+                  onCheckedChange={(v) => setEventForm({ ...eventForm, isActive: v })}
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label>{i18n("settings.eventImage")}</Label>
-              <Select
-                value={eventMediaType}
-                onValueChange={(value: "image" | "video") => {
-                  setEventMediaType(value);
-                  setEventForm((prev) =>
-                    value === "image" ? { ...prev, video: "" } : { ...prev, image: "" }
-                  );
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="image">{i18n("settings.heroTypeImage")}</SelectItem>
-                  <SelectItem value="video">{i18n("settings.heroTypeVideo")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-[var(--admin-muted)]">
-                {i18n("settings.eventMediaHint")}
-              </p>
+              <div className="space-y-1.5">
+                <Label>{i18n("settings.eventImage")}</Label>
+                <Select
+                  value={eventMediaType}
+                  onValueChange={(value: "image" | "video") => {
+                    setEventMediaType(value);
+                    setEventForm((prev) =>
+                      value === "image" ? { ...prev, video: "" } : { ...prev, image: "" }
+                    );
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="image">{i18n("settings.heroTypeImage")}</SelectItem>
+                    <SelectItem value="video">{i18n("settings.heroTypeVideo")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {eventMediaType === "image" ? (
                 <label
                   className={cn(
-                    "flex h-32 w-full max-w-sm cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed",
+                    "flex h-24 w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed",
                     isUploading("event-image") && "pointer-events-none opacity-60"
                   )}
                 >
@@ -1920,7 +1963,7 @@ export function SettingsPanel() {
                       src={eventForm.image}
                       alt=""
                       width={320}
-                      height={128}
+                      height={96}
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -1951,7 +1994,7 @@ export function SettingsPanel() {
                 <div className="space-y-2">
                   <video
                     src={eventForm.video}
-                    className="h-32 w-full max-w-sm rounded-lg border object-cover"
+                    className="h-24 w-full rounded-lg border object-cover"
                     controls
                     playsInline
                   />
@@ -1968,7 +2011,7 @@ export function SettingsPanel() {
                     <Input
                       type="file"
                       accept="video/*"
-                      className="max-w-xs"
+                      className="max-w-full text-xs"
                       disabled={isUploading("event-video")}
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
@@ -2015,62 +2058,9 @@ export function SettingsPanel() {
                   fileName={eventVideoUpload?.fileName}
                 />
               )}
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>{i18n("settings.eventStartDate")}</Label>
-                <AdminDatePicker
-                  value={eventForm.startDate}
-                  placeholder={i18n("settings.eventStartDate")}
-                  onChange={(startDate) => setEventForm({ ...eventForm, startDate })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{i18n("settings.eventEndDate")}</Label>
-                <AdminDatePicker
-                  value={eventForm.endDate}
-                  placeholder={i18n("settings.eventEndDate")}
-                  onChange={(endDate) => setEventForm({ ...eventForm, endDate })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2 rounded-lg border border-[var(--admin-border)] px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <Label htmlFor="event-overlay-opacity">{i18n("settings.eventOverlayOpacity")}</Label>
-                <span className="text-sm text-[var(--admin-muted)]">
-                  {formatAdminDigits(String(eventForm.overlayOpacity), locale)}%
-                </span>
-              </div>
-              <p className="text-xs text-[var(--admin-muted)]">
-                {i18n("settings.eventOverlayOpacityDesc")}
+              <p className="text-[11px] leading-snug text-[var(--admin-muted)]">
+                {i18n("settings.eventMediaHint")}
               </p>
-              <input
-                id="event-overlay-opacity"
-                type="range"
-                min={MIN_EVENT_OVERLAY_OPACITY}
-                max={MAX_EVENT_OVERLAY_OPACITY}
-                step={1}
-                value={eventForm.overlayOpacity}
-                onChange={(e) =>
-                  setEventForm({
-                    ...eventForm,
-                    overlayOpacity: resolveEventOverlayOpacity(Number(e.target.value)),
-                  })
-                }
-                className="w-full accent-[var(--admin-primary)]"
-              />
-              <div className="flex justify-between text-xs text-[var(--admin-muted)]">
-                <span>{i18n("settings.eventOverlayOpacityNone")}</span>
-                <span>{i18n("settings.eventOverlayOpacityDark")}</span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] px-4 py-3">
-              <Label htmlFor="event-form-active">{i18n("common.active")}</Label>
-              <Switch
-                id="event-form-active"
-                checked={eventForm.isActive}
-                onCheckedChange={(v) => setEventForm({ ...eventForm, isActive: v })}
-              />
             </div>
           </div>
           <DialogFooter>

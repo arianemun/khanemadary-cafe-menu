@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Percent, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminT } from "@/lib/admin-i18n";
+import type { DiscountScope } from "@/lib/discount";
 import { AdminNumericInput } from "@/components/admin/AdminDigits";
 import { AdminDatePicker } from "@/components/admin/AdminDatePicker";
 import {
@@ -12,6 +13,7 @@ import {
   cn,
   formatAdminDate,
   formatAdminDisplayValue,
+  getAdminTranslationName,
 } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,23 +62,39 @@ const WEEKDAY_KEYS = [
 
 type Discount = {
   id: string;
-  itemId: string;
+  scope: DiscountScope;
+  categoryId: string | null;
   type: string;
   value: number;
   startDate: string | null;
   endDate: string | null;
   weekdays: string;
   isActive: boolean;
-  item?: {
-    mainImage?: string | null;
+  category?: {
+    slug: string;
     translations: { language: string; name: string }[];
-  };
+  } | null;
+  items: Array<{
+    item: {
+      id: string;
+      mainImage?: string | null;
+      translations: { language: string; name: string }[];
+    };
+  }>;
 };
 
 type MenuItem = {
   id: string;
+  categoryId?: string | null;
   mainImage?: string | null;
   translations: { language: string; name: string }[];
+};
+
+type Category = {
+  id: string;
+  slug: string;
+  translations: { language: string; name: string }[];
+  _count?: { items: number };
 };
 
 function scheduleLabel(
@@ -116,8 +134,38 @@ function scheduleLabel(
   return i18n("common.alwaysActive");
 }
 
+function getItemName(
+  item: MenuItem | Discount["items"][number]["item"],
+  locale: "fa" | "en"
+) {
+  return getAdminTranslationName(item.translations, locale, "—");
+}
+
+function targetLabel(d: Discount, locale: "fa" | "en", i18n: (key: string) => string) {
+  if (d.scope === "category" && d.category) {
+    return getAdminTranslationName(d.category.translations, locale, d.category.slug);
+  }
+  if (d.scope === "item" && d.items[0]?.item) {
+    return getItemName(d.items[0].item, locale);
+  }
+  if (d.scope === "items") {
+    return i18n("discounts.itemsCount").replace(
+      "{count}",
+      String(d.items.length)
+    );
+  }
+  return "—";
+}
+
+function targetPreviewImage(d: Discount) {
+  if (d.scope === "category") return null;
+  return d.items[0]?.item.mainImage ?? null;
+}
+
 const emptyForm = () => ({
-  itemId: "",
+  scope: "item" as DiscountScope,
+  itemIds: [] as string[],
+  categoryId: "",
   type: "percentage" as "percentage" | "fixed",
   value: 0,
   scheduleType: "always" as "always" | "range" | "weekdays",
@@ -131,21 +179,25 @@ export function DiscountManager() {
   const { t: i18n, locale } = useAdminT();
   const [discounts, setDiscounts] = useState<Discount[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [itemSearch, setItemSearch] = useState("");
+  const [categorySearch, setCategorySearch] = useState("");
   const [form, setForm] = useState(emptyForm());
 
   async function load() {
     setLoading(true);
-    const [dRes, iRes] = await Promise.all([
+    const [dRes, iRes, cRes] = await Promise.all([
       fetch("/api/admin/discounts"),
       fetch("/api/admin/items"),
+      fetch("/api/admin/categories"),
     ]);
     setDiscounts(await dRes.json());
     setItems(await iRes.json());
+    setCategories(await cRes.json());
     setLoading(false);
   }
 
@@ -153,18 +205,40 @@ export function DiscountManager() {
     void load();
   }, []);
 
+  function toggleItem(itemId: string) {
+    if (form.scope === "item") {
+      setForm({ ...form, itemIds: [itemId] });
+      return;
+    }
+    const itemIds = form.itemIds.includes(itemId)
+      ? form.itemIds.filter((id) => id !== itemId)
+      : [...form.itemIds, itemId];
+    setForm({ ...form, itemIds });
+  }
+
   async function save() {
-    if (!form.itemId) {
+    if (form.scope === "category" && !form.categoryId) {
+      toast.error(i18n("discounts.selectCategory"));
+      return;
+    }
+    if (form.scope === "item" && form.itemIds.length !== 1) {
       toast.error(i18n("discounts.selectItem"));
       return;
     }
+    if (form.scope === "items" && form.itemIds.length === 0) {
+      toast.error(i18n("discounts.selectItems"));
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch("/api/admin/discounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          itemId: form.itemId,
+          scope: form.scope,
+          itemIds: form.scope === "category" ? [] : form.itemIds,
+          categoryId: form.scope === "category" ? form.categoryId : null,
           type: form.type,
           value: form.value,
           startDate: form.scheduleType === "range" ? form.startDate : null,
@@ -177,6 +251,8 @@ export function DiscountManager() {
       toast.success(i18n("discounts.created"));
       setDialogOpen(false);
       setForm(emptyForm());
+      setItemSearch("");
+      setCategorySearch("");
       load();
     } catch {
       toast.error(i18n("discounts.saveFailed"));
@@ -186,14 +262,26 @@ export function DiscountManager() {
   }
 
   const filteredItems = items.filter((item) => {
-    const name = item.translations.find((t) => t.language === "fa")?.name ?? "";
+    const name = getItemName(item, locale);
     return name.toLowerCase().includes(itemSearch.toLowerCase());
+  });
+
+  const filteredCategories = categories.filter((category) => {
+    const name = getAdminTranslationName(category.translations, locale, category.slug);
+    return name.toLowerCase().includes(categorySearch.toLowerCase());
   });
 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button onClick={() => { setForm(emptyForm()); setDialogOpen(true); }}>
+        <Button
+          onClick={() => {
+            setForm(emptyForm());
+            setItemSearch("");
+            setCategorySearch("");
+            setDialogOpen(true);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" />
           {i18n("discounts.add")}
         </Button>
@@ -216,7 +304,7 @@ export function DiscountManager() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{i18n("common.item")}</TableHead>
+                <TableHead>{i18n("discounts.target")}</TableHead>
                 <TableHead className="hidden md:table-cell">{i18n("common.type")}</TableHead>
                 <TableHead>{i18n("common.value")}</TableHead>
                 <TableHead className="hidden lg:table-cell">{i18n("common.schedule")}</TableHead>
@@ -226,18 +314,36 @@ export function DiscountManager() {
             </TableHeader>
             <TableBody>
               {discounts.map((d) => {
-                const name =
-                  d.item?.translations.find((t) => t.language === "fa")?.name ?? "—";
+                const name = targetLabel(d, locale, i18n);
+                const previewImage = targetPreviewImage(d);
                 return (
                   <TableRow key={d.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-gray-100">
-                          {d.item?.mainImage && (
-                            <Image src={d.item.mainImage} alt="" fill className="object-cover" />
-                          )}
+                        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                          {previewImage ? (
+                            <Image
+                              src={previewImage}
+                              alt=""
+                              fill
+                              className="object-cover"
+                            />
+                          ) : d.scope === "category" ? (
+                            <span className="text-xs text-[var(--admin-muted)]">
+                              {i18n("common.category").slice(0, 1)}
+                            </span>
+                          ) : d.scope === "items" ? (
+                            <span className={cn("text-xs text-[var(--admin-muted)]", adminFaDigitClass(locale))}>
+                              {formatAdminDisplayValue(d.items.length, locale)}
+                            </span>
+                          ) : null}
                         </div>
-                        <span className="font-medium">{name}</span>
+                        <div className="min-w-0">
+                          <div className="truncate font-medium">{name}</div>
+                          <div className="text-xs text-[var(--admin-muted)]">
+                            {i18n(`discounts.scope.${d.scope}`)}
+                          </div>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
@@ -295,159 +401,248 @@ export function DiscountManager() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AdminDialogContent className="w-[calc(100vw-2rem)] max-w-[480px]">
-          <DialogHeader>
+        <AdminDialogContent className="flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-[520px] flex-col gap-4 overflow-hidden p-4 sm:p-6">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{i18n("discounts.add")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>{i18n("common.type")}</Label>
-              <RadioGroup
-                value={form.type}
-                onValueChange={(v) =>
-                  setForm({ ...form, type: v as "percentage" | "fixed" })
-                }
-                className="flex gap-4"
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="percentage" id="pct" />
-                  <Label htmlFor="pct">{i18n("discounts.typePercent")}</Label>
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>{i18n("common.type")}</Label>
+                <RadioGroup
+                  value={form.type}
+                  onValueChange={(v) =>
+                    setForm({ ...form, type: v as "percentage" | "fixed" })
+                  }
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="percentage" id="pct" />
+                    <Label htmlFor="pct">{i18n("discounts.typePercent")}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="fixed" id="fixed" />
+                    <Label htmlFor="fixed">{i18n("discounts.typeFixed")}</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="space-y-2">
+                <Label>{i18n("common.value")}</Label>
+                <div className="relative">
+                  <AdminNumericInput
+                    value={String(form.value)}
+                    onChange={(value) => {
+                      const nextValue = Number(value) || 0;
+                      setForm({
+                        ...form,
+                        value: nextValue,
+                        ...(nextValue <= 0
+                          ? { itemIds: [], categoryId: "" }
+                          : {}),
+                      });
+                    }}
+                    className={locale === "fa" ? "pl-10" : "pr-10"}
+                  />
+                  <span
+                    className={cn(
+                      "absolute top-1/2 -translate-y-1/2 text-sm text-[var(--admin-muted)]",
+                      locale === "fa" ? "left-3" : "right-3"
+                    )}
+                  >
+                    {form.type === "percentage" ? "%" : i18n("common.currency")}
+                  </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="fixed" id="fixed" />
-                  <Label htmlFor="fixed">{i18n("discounts.typeFixed")}</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="space-y-2">
-              <Label>{i18n("common.value")}</Label>
-              <div className="relative">
-                <AdminNumericInput
-                  value={String(form.value)}
-                  onChange={(value) => {
-                    const nextValue = Number(value) || 0;
+              </div>
+
+              {form.value > 0 && (
+                <>
+                  <div className="space-y-2">
+                    <Label>{i18n("discounts.applyTo")}</Label>
+                    <RadioGroup
+                      value={form.scope}
+                      onValueChange={(v) =>
+                        setForm({
+                          ...form,
+                          scope: v as DiscountScope,
+                          itemIds: [],
+                          categoryId: "",
+                        })
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="item" id="scope-item" />
+                        <Label htmlFor="scope-item">{i18n("discounts.scope.item")}</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="items" id="scope-items" />
+                        <Label htmlFor="scope-items">{i18n("discounts.scope.items")}</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <RadioGroupItem value="category" id="scope-category" />
+                        <Label htmlFor="scope-category">
+                          {i18n("discounts.scope.category")}
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {form.scope === "category" ? (
+                    <div className="space-y-2">
+                      <Label>{i18n("common.category")}</Label>
+                      <Input
+                        placeholder={i18n("discounts.searchCategories")}
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                      />
+                      <div className="max-h-40 overflow-y-auto rounded-md border">
+                        {filteredCategories.map((category) => {
+                          const name = getAdminTranslationName(
+                            category.translations,
+                            locale,
+                            category.slug
+                          );
+                          const selected = form.categoryId === category.id;
+                          return (
+                            <button
+                              key={category.id}
+                              type="button"
+                              className={cn(
+                                "block w-full px-3 py-2 text-start text-sm hover:bg-gray-50",
+                                selected && "bg-blue-50 font-medium"
+                              )}
+                              onClick={() =>
+                                setForm({ ...form, categoryId: category.id })
+                              }
+                            >
+                              <span>{name}</span>
+                              {category._count != null && (
+                                <span className="ms-2 text-xs text-[var(--admin-muted)]">
+                                  ({formatAdminDisplayValue(category._count.items, locale)}{" "}
+                                  {i18n("common.items")})
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label>
+                        {form.scope === "item"
+                          ? i18n("common.item")
+                          : i18n("common.items")}
+                      </Label>
+                      <Input
+                        placeholder={i18n("discounts.searchItems")}
+                        value={itemSearch}
+                        onChange={(e) => setItemSearch(e.target.value)}
+                      />
+                      {form.scope === "items" && form.itemIds.length > 0 && (
+                        <p className="text-xs text-[var(--admin-muted)]">
+                          {i18n("discounts.selectedItems").replace(
+                            "{count}",
+                            String(form.itemIds.length)
+                          )}
+                        </p>
+                      )}
+                      <div className="max-h-40 overflow-y-auto rounded-md border">
+                        {filteredItems.slice(0, 20).map((item) => {
+                          const name = getItemName(item, locale);
+                          const selected = form.itemIds.includes(item.id);
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              className={cn(
+                                "block w-full px-3 py-2 text-start text-sm hover:bg-gray-50",
+                                selected && "bg-blue-50 font-medium"
+                              )}
+                              onClick={() => toggleItem(item.id)}
+                            >
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="space-y-2">
+                <Label>{i18n("common.schedule")}</Label>
+                <RadioGroup
+                  value={form.scheduleType}
+                  onValueChange={(v) =>
                     setForm({
                       ...form,
-                      value: nextValue,
-                      ...(nextValue <= 0 ? { itemId: "" } : {}),
-                    });
-                  }}
-                  className={locale === "fa" ? "pl-10" : "pr-10"}
-                />
-                <span
-                  className={cn(
-                    "absolute top-1/2 -translate-y-1/2 text-sm text-[var(--admin-muted)]",
-                    locale === "fa" ? "left-3" : "right-3"
-                  )}
+                      scheduleType: v as "always" | "range" | "weekdays",
+                    })
+                  }
                 >
-                  {form.type === "percentage" ? "%" : i18n("common.currency")}
-                </span>
-              </div>
-            </div>
-            {form.value > 0 && (
-              <div className="space-y-2">
-                <Label>{i18n("common.item")}</Label>
-                <Input
-                  placeholder={i18n("discounts.searchItems")}
-                  value={itemSearch}
-                  onChange={(e) => setItemSearch(e.target.value)}
-                />
-                <div className="max-h-32 overflow-y-auto rounded-md border">
-                  {filteredItems.slice(0, 8).map((item) => {
-                    const name =
-                      item.translations.find((t) => t.language === "fa")?.name ?? "";
-                    return (
-                      <button
-                        key={item.id}
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="always" id="always" />
+                    <Label htmlFor="always">{i18n("discounts.scheduleAlways")}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="range" id="range" />
+                    <Label htmlFor="range">{i18n("discounts.scheduleRange")}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="weekdays" id="weekdays" />
+                    <Label htmlFor="weekdays">{i18n("discounts.scheduleWeekdays")}</Label>
+                  </div>
+                </RadioGroup>
+                {form.scheduleType === "range" && (
+                  <div className="flex gap-2">
+                    <AdminDatePicker
+                      value={form.startDate}
+                      onChange={(startDate) => setForm({ ...form, startDate })}
+                    />
+                    <AdminDatePicker
+                      value={form.endDate}
+                      onChange={(endDate) => setForm({ ...form, endDate })}
+                    />
+                  </div>
+                )}
+                {form.scheduleType === "weekdays" && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {WEEKDAY_KEYS.map((day) => (
+                      <Button
+                        key={day.value}
                         type="button"
-                        className={`block w-full px-3 py-2 text-start text-sm hover:bg-gray-50 ${
-                          form.itemId === item.id ? "bg-blue-50 font-medium" : ""
-                        }`}
-                        onClick={() => setForm({ ...form, itemId: item.id })}
+                        size="sm"
+                        variant={
+                          form.weekdays.includes(day.value) ? "default" : "outline"
+                        }
+                        className={cn(
+                          "h-9 min-h-9 w-full px-2 text-sm whitespace-normal text-center leading-tight",
+                          locale === "fa" && "font-admin-fa"
+                        )}
+                        onClick={() => {
+                          const weekdays = form.weekdays.includes(day.value)
+                            ? form.weekdays.filter((d) => d !== day.value)
+                            : [...form.weekdays, day.value];
+                          setForm({ ...form, weekdays });
+                        }}
                       >
-                        {name}
-                      </button>
-                    );
-                  })}
-                </div>
+                        {i18n(`discounts.weekdays.${day.key}.label`)}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-            <div className="space-y-2">
-              <Label>{i18n("common.schedule")}</Label>
-              <RadioGroup
-                value={form.scheduleType}
-                onValueChange={(v) =>
-                  setForm({
-                    ...form,
-                    scheduleType: v as "always" | "range" | "weekdays",
-                  })
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="always" id="always" />
-                  <Label htmlFor="always">{i18n("discounts.scheduleAlways")}</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="range" id="range" />
-                  <Label htmlFor="range">{i18n("discounts.scheduleRange")}</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <RadioGroupItem value="weekdays" id="weekdays" />
-                  <Label htmlFor="weekdays">{i18n("discounts.scheduleWeekdays")}</Label>
-                </div>
-              </RadioGroup>
-              {form.scheduleType === "range" && (
-                <div className="flex gap-2">
-                  <AdminDatePicker
-                    value={form.startDate}
-                    onChange={(startDate) =>
-                      setForm({ ...form, startDate })
-                    }
-                  />
-                  <AdminDatePicker
-                    value={form.endDate}
-                    onChange={(endDate) =>
-                      setForm({ ...form, endDate })
-                    }
-                  />
-                </div>
-              )}
-              {form.scheduleType === "weekdays" && (
-                <div className="grid grid-cols-4 gap-2">
-                  {WEEKDAY_KEYS.map((day) => (
-                    <Button
-                      key={day.value}
-                      type="button"
-                      size="sm"
-                      variant={
-                        form.weekdays.includes(day.value) ? "default" : "outline"
-                      }
-                      className={cn(
-                        "h-9 min-h-9 w-full px-2 text-sm whitespace-normal text-center leading-tight",
-                        locale === "fa" && "font-admin-fa"
-                      )}
-                      onClick={() => {
-                        const weekdays = form.weekdays.includes(day.value)
-                          ? form.weekdays.filter((d) => d !== day.value)
-                          : [...form.weekdays, day.value];
-                        setForm({ ...form, weekdays });
-                      }}
-                    >
-                      {i18n(`discounts.weekdays.${day.key}.label`)}
-                    </Button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center justify-between">
-              <Label>{i18n("common.active")}</Label>
-              <Switch
-                checked={form.isActive}
-                onCheckedChange={(v) => setForm({ ...form, isActive: v })}
-              />
+              <div className="flex items-center justify-between">
+                <Label>{i18n("common.active")}</Label>
+                <Switch
+                  checked={form.isActive}
+                  onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+                />
+              </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {i18n("common.cancel")}
             </Button>

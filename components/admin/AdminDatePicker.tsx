@@ -20,15 +20,33 @@ type AdminDatePickerProps = {
   disabled?: boolean;
 };
 
+export function dateToLocalInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function toIsoDate(value: string) {
   if (!value) return "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (match) return value.trim();
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
+  return dateToLocalInputValue(date);
 }
 
 function fromIsoDate(value: string) {
   if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (match) {
+    const date = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3])
+    );
+    if (!Number.isNaN(date.getTime())) return date;
+  }
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) return null;
   return date;
@@ -74,6 +92,11 @@ export function AdminDatePicker({
         locale={persian_fa}
         format="YYYY/MM/DD"
         disabled={disabled}
+        className="teal rmdp-rtl"
+        onOpenPickNewDate={false}
+        fixMainPosition
+        fixRelativePosition
+        scrollSensitive={false}
         onChange={(next) => {
           if (!next || Array.isArray(next)) {
             onChange("");
@@ -85,7 +108,7 @@ export function AdminDatePicker({
             onChange("");
             return;
           }
-          onChange(gregorianDate.toISOString().slice(0, 10));
+          onChange(dateToLocalInputValue(gregorianDate));
         }}
         render={(displayValue, openCalendar) => (
           <button
@@ -107,11 +130,9 @@ export function AdminDatePicker({
             <CalendarDays className="h-4 w-4 shrink-0 text-[var(--admin-muted)]" />
           </button>
         )}
-        containerClassName="w-full"
+        containerClassName="w-full admin-date-picker"
         calendarPosition="bottom-center"
         arrow={false}
-        portal
-        zIndex={2000}
       />
     );
   }
