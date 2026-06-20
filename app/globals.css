@@ -12,11 +12,42 @@
   --border-color: #e0e0e0;
   --radius-card: 16px;
   --radius-btn: 8px;
+  --radius-sheet: 24px;
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
   --spacing-section: 24px;
   --spacing-card-gap: 8px;
   --status-open: #3fda2b;
+  --app-height: 100vh;
+  --app-height: 100dvh;
   --toolbar-height: 56px;
+  --category-tabs-height: 48px;
+  --sticky-nav-offset: calc(var(--toolbar-height) + var(--category-tabs-height));
+  --menu-max-width: 960px;
+
+  /* Admin panel */
+  --admin-bg: #f8f9fa;
+  --admin-surface: #ffffff;
+  --admin-border: #e9ecef;
+  --admin-text: #212529;
+  --admin-muted: #6c757d;
+  --admin-accent: #3f51b5;
+  --admin-accent-hover: #3446a0;
+  --admin-success: #2e7d32;
+  --admin-danger: #c62828;
+  --admin-warning: #e65100;
+  --admin-sidebar: #1e1e2e;
+  --admin-sidebar-text: #a8a8b3;
+  --admin-sidebar-active: #ffffff;
+
+  /* shadcn Sidebar (admin theme) */
+  --sidebar-background: var(--admin-sidebar);
+  --sidebar-foreground: var(--admin-sidebar-text);
+  --sidebar-primary: var(--admin-accent);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(63, 81, 181, 0.15);
+  --sidebar-accent-foreground: var(--admin-sidebar-active);
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+  --sidebar-ring: var(--admin-accent);
 }
 
 @media (min-width: 600px) {
@@ -31,17 +62,28 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   color: var(--primary-text);
   background: var(--primary-bg);
   font-family: var(--font-vazirmatn), sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+}
+
+html:has([data-public-menu]),
+html:has([data-public-menu]) body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html:has([data-public-menu])::-webkit-scrollbar,
+html:has([data-public-menu]) body::-webkit-scrollbar {
+  display: none;
 }
 
 [dir="rtl"] body {
@@ -57,6 +99,26 @@ body {
     height: var(--toolbar-height);
   }
 
+  .category-tabs-height {
+    height: var(--category-tabs-height);
+    max-height: var(--category-tabs-height);
+    overflow: hidden;
+  }
+
+  .scroll-mt-sticky-nav {
+    scroll-margin-top: var(--sticky-nav-offset);
+  }
+
+  .sticky-below-toolbar {
+    position: sticky;
+    top: var(--toolbar-height);
+    z-index: 40;
+  }
+
+  .hero-viewport-height {
+    min-height: var(--app-height, 100dvh);
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -65,4 +127,133 @@ body {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .font-admin {
+    font-family: Bon, var(--font-vazirmatn), system-ui, sans-serif;
+  }
+
+  .font-admin-fa {
+    font-family: Bon, var(--font-vazirmatn), sans-serif;
+    direction: rtl;
+  }
+
+  .admin-fa-digits {
+    font-family: var(--font-vazirmatn), sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* Display-only (tables, labels, spans): match surrounding text size */
+  .admin-fa-digits:not(input):not(textarea) {
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  /* Form fields: keep text-sm sizing; inherit was overriding Input/Textarea text-sm */
+  input.admin-fa-digits,
+  textarea.admin-fa-digits {
+    font-family: var(--font-vazirmatn), sans-serif;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  /* Bon lacks Persian digits — Vazirmatn fallback made numerals look oversized */
+  .font-admin-fa :is(input:not([type="color"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]), textarea) {
+    font-family: var(--font-vazirmatn), sans-serif;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .animate-heartbeat {
+    animation: heartbeat 1.2s ease-in-out infinite;
+  }
+}
+
+/* Public menu toasts (Sonner portals to body; override default system font) */
+html:has([data-public-menu]) [data-sonner-toaster] {
+  font-family: var(--font-vazirmatn), sans-serif;
+}
+
+html:has([data-public-menu]) [data-sonner-toaster][dir="rtl"] [data-sonner-toast] {
+  text-align: right;
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.2);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.15);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* Sonner injects ui-sans-serif at runtime; override with app fonts. */
+[data-sonner-toaster].font-admin-fa,
+[data-sonner-toaster].font-admin-fa [data-sonner-toast] {
+  font-family: Bon, var(--font-vazirmatn), sans-serif !important;
+}
+
+[data-sonner-toaster].font-admin,
+[data-sonner-toaster].font-admin [data-sonner-toast] {
+  font-family: Bon, var(--font-vazirmatn), system-ui, sans-serif !important;
+}
+
+[data-sonner-toaster].font-fa,
+[data-sonner-toaster].font-fa [data-sonner-toast] {
+  font-family: var(--font-vazirmatn), sans-serif !important;
+}
+
+/* Event carousel (Swiper cards stack, compact) */
+.event-carousel-section {
+  overflow: visible;
+}
+
+.event-carousel {
+  --event-card-width: min(280px, 78vw);
+  --event-card-height: calc(var(--event-card-width) * 9 / 16);
+  width: var(--event-card-width);
+  height: var(--event-card-height);
+  overflow: visible !important;
+}
+
+.event-carousel.swiper-cards {
+  overflow: visible !important;
+}
+
+@media (min-width: 480px) {
+  .event-carousel {
+    --event-card-width: 300px;
+  }
+}
+
+.event-carousel--cards {
+  margin-inline: auto;
+}
+
+.event-carousel .swiper-wrapper {
+  overflow: visible;
+}
+
+.event-carousel-slide {
+  width: 100%;
+  height: 100%;
+}
+
+.event-carousel-card {
+  box-shadow: none;
+}
+
+.event-carousel .swiper-slide-shadow,
+.event-carousel .swiper-slide-shadow-cards {
+  display: none !important;
 }

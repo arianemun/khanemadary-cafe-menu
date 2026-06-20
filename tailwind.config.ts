@@ -18,10 +18,21 @@ const config: Config = {
         border: "var(--border-color)",
         "secondary-text": "var(--secondary-text)",
         status: "var(--status-open)",
+        sidebar: {
+          DEFAULT: "var(--sidebar-background)",
+          foreground: "var(--sidebar-foreground)",
+          primary: "var(--sidebar-primary)",
+          "primary-foreground": "var(--sidebar-primary-foreground)",
+          accent: "var(--sidebar-accent)",
+          "accent-foreground": "var(--sidebar-accent-foreground)",
+          border: "var(--sidebar-border)",
+          ring: "var(--sidebar-ring)",
+        },
       },
       borderRadius: {
         card: "var(--radius-card)",
         btn: "var(--radius-btn)",
+        sheet: "var(--radius-sheet)",
       },
       boxShadow: {
         card: "var(--shadow-card)",
@@ -36,7 +47,7 @@ const config: Config = {
       },
       maxWidth: {
         handset: "480px",
-        web: "960px",
+        web: "var(--menu-max-width, 960px)",
       },
     },
   },
