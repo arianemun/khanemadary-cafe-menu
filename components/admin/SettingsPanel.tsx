@@ -537,17 +537,37 @@ function MenuColorField({
   label: string;
 }) {
   const [draft, setDraft] = useState(value || DEFAULT_MENU_COLOR);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setDraft(value || DEFAULT_MENU_COLOR);
   }, [value]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
 
   const pickerColor =
     normalizeHexColor(draft) ??
     normalizeHexColor(value) ??
     DEFAULT_MENU_COLOR;
 
+  const scheduleSave = (color: string) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      const normalized = normalizeHexColor(color);
+      if (normalized) onSave(normalized);
+    }, 600);
+  };
+
   const commit = () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
     const normalized = normalizeHexColor(draft);
     if (normalized) {
       setDraft(normalized);
@@ -567,7 +587,7 @@ function MenuColorField({
           onChange={(e) => {
             const color = e.target.value;
             setDraft(color);
-            onSave(color);
+            scheduleSave(color);
           }}
           className="h-10 w-16 cursor-pointer rounded border border-[var(--admin-border)]"
           aria-label={label}

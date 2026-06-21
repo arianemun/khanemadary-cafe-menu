@@ -3,6 +3,8 @@ type ItemTranslationRow = {
   name?: string | null;
   description?: string | null;
   ingredients?: string | null;
+  primaryPriceLabel?: string | null;
+  secondaryPriceLabel?: string | null;
 };
 
 function translationFallbackChain(lang: string): string[] {
@@ -13,7 +15,12 @@ function translationFallbackChain(lang: string): string[] {
 function pickField(
   translations: ItemTranslationRow[] | undefined,
   lang: string,
-  field: "name" | "description" | "ingredients"
+  field:
+    | "name"
+    | "description"
+    | "ingredients"
+    | "primaryPriceLabel"
+    | "secondaryPriceLabel"
 ): string {
   if (!translations?.length) return "";
   for (const code of translationFallbackChain(lang)) {
@@ -32,6 +39,8 @@ export function getItemLocalizedText(
     name: pickField(translations, lang, "name"),
     description: pickField(translations, lang, "description"),
     ingredients: pickField(translations, lang, "ingredients"),
+    primaryPriceLabel: pickField(translations, lang, "primaryPriceLabel"),
+    secondaryPriceLabel: pickField(translations, lang, "secondaryPriceLabel"),
   };
 }
 

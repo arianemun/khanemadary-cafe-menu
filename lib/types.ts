@@ -31,12 +31,17 @@ export interface MenuItem {
   description: string;
   ingredients: string;
   price: number;
+  discountedPrice?: number | null;
+  secondaryPriceEnabled: boolean;
+  secondaryPrice?: number | null;
+  secondaryDiscountedPrice?: number | null;
+  primaryPriceLabel?: string;
+  secondaryPriceLabel?: string;
   preparationMinutes?: number | null;
   image: string | null;
   galleryImages: string[];
   available: boolean;
   sortOrder: number;
-  discountedPrice?: number | null;
 }
 
 export interface Place {

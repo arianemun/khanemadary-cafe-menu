@@ -401,20 +401,20 @@ export function DiscountManager() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <AdminDialogContent className="flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-[520px] flex-col gap-4 overflow-hidden p-4 sm:p-6">
-          <DialogHeader className="shrink-0">
+        <AdminDialogContent className="max-h-none gap-3 overflow-visible p-4 sm:max-w-2xl sm:p-5">
+          <DialogHeader>
             <DialogTitle>{i18n("discounts.add")}</DialogTitle>
           </DialogHeader>
-          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">
-            <div className="space-y-4">
-              <div className="space-y-2">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3">
+              <div className="space-y-1.5">
                 <Label>{i18n("common.type")}</Label>
                 <RadioGroup
                   value={form.type}
                   onValueChange={(v) =>
                     setForm({ ...form, type: v as "percentage" | "fixed" })
                   }
-                  className="flex gap-4"
+                  className="flex flex-wrap gap-4"
                 >
                   <div className="flex items-center gap-2">
                     <RadioGroupItem value="percentage" id="pct" />
@@ -426,7 +426,7 @@ export function DiscountManager() {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>{i18n("common.value")}</Label>
                 <div className="relative">
                   <AdminNumericInput
@@ -453,10 +453,91 @@ export function DiscountManager() {
                   </span>
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <Label>{i18n("common.schedule")}</Label>
+                <RadioGroup
+                  value={form.scheduleType}
+                  onValueChange={(v) =>
+                    setForm({
+                      ...form,
+                      scheduleType: v as "always" | "range" | "weekdays",
+                    })
+                  }
+                  className="space-y-1.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="always" id="always" />
+                    <Label htmlFor="always">{i18n("discounts.scheduleAlways")}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="range" id="range" />
+                    <Label htmlFor="range">{i18n("discounts.scheduleRange")}</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="weekdays" id="weekdays" />
+                    <Label htmlFor="weekdays">{i18n("discounts.scheduleWeekdays")}</Label>
+                  </div>
+                </RadioGroup>
+                {form.scheduleType === "range" && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="space-y-1.5">
+                      <Label>{i18n("settings.eventStartDate")}</Label>
+                      <AdminDatePicker
+                        value={form.startDate}
+                        placeholder={i18n("settings.eventStartDate")}
+                        onChange={(startDate) => setForm({ ...form, startDate })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>{i18n("settings.eventEndDate")}</Label>
+                      <AdminDatePicker
+                        value={form.endDate}
+                        placeholder={i18n("settings.eventEndDate")}
+                        onChange={(endDate) => setForm({ ...form, endDate })}
+                      />
+                    </div>
+                  </div>
+                )}
+                {form.scheduleType === "weekdays" && (
+                  <div className="grid grid-cols-4 gap-1.5 pt-1">
+                    {WEEKDAY_KEYS.map((day) => (
+                      <Button
+                        key={day.value}
+                        type="button"
+                        size="sm"
+                        variant={
+                          form.weekdays.includes(day.value) ? "default" : "outline"
+                        }
+                        className={cn(
+                          "h-9 min-h-9 w-full px-1.5 text-xs whitespace-normal text-center leading-tight",
+                          locale === "fa" && "font-admin-fa"
+                        )}
+                        onClick={() => {
+                          const weekdays = form.weekdays.includes(day.value)
+                            ? form.weekdays.filter((d) => d !== day.value)
+                            : [...form.weekdays, day.value];
+                          setForm({ ...form, weekdays });
+                        }}
+                      >
+                        {i18n(`discounts.weekdays.${day.key}.label`)}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] px-3 py-2">
+                <Label>{i18n("common.active")}</Label>
+                <Switch
+                  checked={form.isActive}
+                  onCheckedChange={(v) => setForm({ ...form, isActive: v })}
+                />
+              </div>
+            </div>
 
-              {form.value > 0 && (
+            <div className="space-y-3">
+              {form.value > 0 ? (
                 <>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label>{i18n("discounts.applyTo")}</Label>
                     <RadioGroup
                       value={form.scope}
@@ -468,6 +549,7 @@ export function DiscountManager() {
                           categoryId: "",
                         })
                       }
+                      className="space-y-1.5"
                     >
                       <div className="flex items-center gap-2">
                         <RadioGroupItem value="item" id="scope-item" />
@@ -487,14 +569,14 @@ export function DiscountManager() {
                   </div>
 
                   {form.scope === "category" ? (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>{i18n("common.category")}</Label>
                       <Input
                         placeholder={i18n("discounts.searchCategories")}
                         value={categorySearch}
                         onChange={(e) => setCategorySearch(e.target.value)}
                       />
-                      <div className="max-h-40 overflow-y-auto rounded-md border">
+                      <div className="max-h-36 overflow-y-auto rounded-md border">
                         {filteredCategories.map((category) => {
                           const name = getAdminTranslationName(
                             category.translations,
@@ -527,7 +609,7 @@ export function DiscountManager() {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <Label>
                         {form.scope === "item"
                           ? i18n("common.item")
@@ -546,7 +628,7 @@ export function DiscountManager() {
                           )}
                         </p>
                       )}
-                      <div className="max-h-40 overflow-y-auto rounded-md border">
+                      <div className="max-h-36 overflow-y-auto rounded-md border">
                         {filteredItems.slice(0, 20).map((item) => {
                           const name = getItemName(item, locale);
                           const selected = form.itemIds.includes(item.id);
@@ -568,81 +650,14 @@ export function DiscountManager() {
                     </div>
                   )}
                 </>
+              ) : (
+                <div className="flex h-full min-h-[120px] items-center justify-center rounded-lg border border-dashed border-[var(--admin-border)] px-4 text-center text-sm text-[var(--admin-muted)]">
+                  {i18n("discounts.enterValueHint")}
+                </div>
               )}
-
-              <div className="space-y-2">
-                <Label>{i18n("common.schedule")}</Label>
-                <RadioGroup
-                  value={form.scheduleType}
-                  onValueChange={(v) =>
-                    setForm({
-                      ...form,
-                      scheduleType: v as "always" | "range" | "weekdays",
-                    })
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="always" id="always" />
-                    <Label htmlFor="always">{i18n("discounts.scheduleAlways")}</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="range" id="range" />
-                    <Label htmlFor="range">{i18n("discounts.scheduleRange")}</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="weekdays" id="weekdays" />
-                    <Label htmlFor="weekdays">{i18n("discounts.scheduleWeekdays")}</Label>
-                  </div>
-                </RadioGroup>
-                {form.scheduleType === "range" && (
-                  <div className="flex gap-2">
-                    <AdminDatePicker
-                      value={form.startDate}
-                      onChange={(startDate) => setForm({ ...form, startDate })}
-                    />
-                    <AdminDatePicker
-                      value={form.endDate}
-                      onChange={(endDate) => setForm({ ...form, endDate })}
-                    />
-                  </div>
-                )}
-                {form.scheduleType === "weekdays" && (
-                  <div className="grid grid-cols-4 gap-2">
-                    {WEEKDAY_KEYS.map((day) => (
-                      <Button
-                        key={day.value}
-                        type="button"
-                        size="sm"
-                        variant={
-                          form.weekdays.includes(day.value) ? "default" : "outline"
-                        }
-                        className={cn(
-                          "h-9 min-h-9 w-full px-2 text-sm whitespace-normal text-center leading-tight",
-                          locale === "fa" && "font-admin-fa"
-                        )}
-                        onClick={() => {
-                          const weekdays = form.weekdays.includes(day.value)
-                            ? form.weekdays.filter((d) => d !== day.value)
-                            : [...form.weekdays, day.value];
-                          setForm({ ...form, weekdays });
-                        }}
-                      >
-                        {i18n(`discounts.weekdays.${day.key}.label`)}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>{i18n("common.active")}</Label>
-                <Switch
-                  checked={form.isActive}
-                  onCheckedChange={(v) => setForm({ ...form, isActive: v })}
-                />
-              </div>
             </div>
           </div>
-          <DialogFooter className="shrink-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               {i18n("common.cancel")}
             </Button>

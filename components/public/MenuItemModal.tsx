@@ -6,9 +6,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { useMenuStore } from "@/lib/store";
 import { getItemImages, isLocalUploadImage } from "@/lib/item-images";
-import { cn, formatPrice, formatAdminDigits } from "@/lib/utils";
+import { cn, formatAdminDigits } from "@/lib/utils";
 import { ItemTitleRow } from "@/components/public/DiscountPercentBadge";
-import { TomanIcon } from "@/components/TomanIcon";
+import { ItemPriceDisplay } from "@/components/public/ItemPriceDisplay";
 import { getEffectiveDiscountPercent } from "@/lib/discount";
 import { useTranslations, useLocale } from "next-intl";
 import type { SiteSettings } from "@/lib/types";
@@ -227,7 +227,6 @@ export function MenuItemModal({ settings }: MenuItemModalProps) {
 
   const close = () => setSelectedItem(null);
 
-  const price = selectedItem?.discountedPrice ?? selectedItem?.price;
   const digitLocale = locale === "fa" || locale === "ar" ? "fa" : "en";
   const title = selectedItem
     ? formatAdminDigits(selectedItem.name, digitLocale)
@@ -288,11 +287,13 @@ export function MenuItemModal({ settings }: MenuItemModalProps) {
                 {selectedItem.ingredients}
               </p>
             ) : null}
-            <div className="mt-4 flex items-center justify-between">
-              <span className="flex items-center gap-1 text-base font-bold">
-                {price != null && formatPrice(price)}
-                <TomanIcon size={14} />
-              </span>
+            <div className="mt-4">
+              <ItemPriceDisplay
+                item={selectedItem}
+                digitLocale={digitLocale}
+                align="start"
+                size="modal"
+              />
             </div>
           </div>
         </>

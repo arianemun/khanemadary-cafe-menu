@@ -32,29 +32,33 @@ model CategoryTranslation {
 }
 
 model MenuItem {
-  id            String            @id @default(cuid())
-  categoryId    String?
-  mainImage     String?
-  galleryImages String            @default("[]")
-  basePrice           Float
-  preparationMinutes  Int?
-  isActive            Boolean           @default(true)
-  isAvailable   Boolean           @default(true)
-  sortOrder     Int               @default(0)
-  createdAt     DateTime          @default(now())
-  category      Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  translations  ItemTranslation[]
-  discountItems DiscountItem[]
+  id                   String            @id @default(cuid())
+  categoryId           String?
+  mainImage            String?
+  galleryImages        String            @default("[]")
+  basePrice            Float
+  secondaryPriceEnabled Boolean          @default(false)
+  secondaryPrice       Float?
+  preparationMinutes   Int?
+  isActive             Boolean           @default(true)
+  isAvailable          Boolean           @default(true)
+  sortOrder            Int               @default(0)
+  createdAt            DateTime          @default(now())
+  category             Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  translations         ItemTranslation[]
+  discountItems        DiscountItem[]
 }
 
 model ItemTranslation {
-  id          String   @id @default(cuid())
-  itemId      String
-  language    String
-  name        String
-  description String?
-  ingredients String?
-  item        MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  itemId              String
+  language            String
+  name                String
+  description         String?
+  ingredients         String?
+  primaryPriceLabel   String?
+  secondaryPriceLabel String?
+  item                MenuItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([itemId, language])
 }

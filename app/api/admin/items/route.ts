@@ -39,6 +39,8 @@ export async function POST(request: Request) {
     mainImage,
     galleryImages,
     basePrice,
+    secondaryPriceEnabled,
+    secondaryPrice,
     preparationMinutes,
     isActive,
     isAvailable,
@@ -58,6 +60,11 @@ export async function POST(request: Request) {
       mainImage: mainImage ?? null,
       galleryImages: JSON.stringify(galleryImages ?? []),
       basePrice: Number(basePrice),
+      secondaryPriceEnabled: Boolean(secondaryPriceEnabled),
+      secondaryPrice:
+        secondaryPriceEnabled && secondaryPrice != null && secondaryPrice !== ""
+          ? Number(secondaryPrice)
+          : null,
       preparationMinutes:
         preparationMinutes != null && preparationMinutes !== ""
           ? Number(preparationMinutes)
@@ -71,11 +78,17 @@ export async function POST(request: Request) {
           name: string;
           description?: string;
           ingredients?: string;
+          primaryPriceLabel?: string;
+          secondaryPriceLabel?: string;
         }>).map((t) => ({
           language: t.language,
           name: t.name,
           description: t.description ?? null,
           ingredients: t.ingredients ?? null,
+          primaryPriceLabel: t.primaryPriceLabel?.trim() ? t.primaryPriceLabel.trim() : null,
+          secondaryPriceLabel: t.secondaryPriceLabel?.trim()
+            ? t.secondaryPriceLabel.trim()
+            : null,
         })),
       },
     },

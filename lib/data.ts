@@ -109,6 +109,14 @@ export async function getMenuItems(
     const discountedPrice = activeDiscount
       ? calculateDiscountedPrice(basePrice, activeDiscount)
       : null;
+    const secondaryBasePrice =
+      item.secondaryPriceEnabled && item.secondaryPrice != null
+        ? item.secondaryPrice
+        : null;
+    const secondaryDiscountedPrice =
+      secondaryBasePrice != null && activeDiscount
+        ? calculateDiscountedPrice(secondaryBasePrice, activeDiscount)
+        : null;
 
     let galleryImages: string[] = [];
     try {
@@ -129,15 +137,25 @@ export async function getMenuItems(
       description: localized.description,
       ingredients: localized.ingredients,
       price: basePrice,
+      discountedPrice:
+        discountedPrice !== null && discountedPrice < basePrice
+          ? discountedPrice
+          : null,
+      secondaryPriceEnabled: item.secondaryPriceEnabled,
+      secondaryPrice: secondaryBasePrice,
+      secondaryDiscountedPrice:
+        secondaryDiscountedPrice !== null &&
+        secondaryBasePrice != null &&
+        secondaryDiscountedPrice < secondaryBasePrice
+          ? secondaryDiscountedPrice
+          : null,
+      primaryPriceLabel: localized.primaryPriceLabel,
+      secondaryPriceLabel: localized.secondaryPriceLabel,
       preparationMinutes: item.preparationMinutes,
       image: item.mainImage,
       galleryImages,
       available: item.isAvailable,
       sortOrder: item.sortOrder,
-      discountedPrice:
-        discountedPrice !== null && discountedPrice < basePrice
-          ? discountedPrice
-          : null,
     };
   });
 }

@@ -85,6 +85,8 @@ type Item = {
   mainImage: string | null;
   galleryImages: string;
   basePrice: number;
+  secondaryPriceEnabled: boolean;
+  secondaryPrice: number | null;
   preparationMinutes: number | null;
   isActive: boolean;
   isAvailable: boolean;
@@ -94,6 +96,8 @@ type Item = {
     name: string;
     description?: string | null;
     ingredients?: string | null;
+    primaryPriceLabel?: string | null;
+    secondaryPriceLabel?: string | null;
   }[];
   category?: { translations: { language: string; name: string }[] };
   discounts?: { type: string; value: number; isActive: boolean }[];
@@ -210,6 +214,13 @@ function ItemRowContent({
         <span className={adminFaDigitClass(locale, "whitespace-nowrap")}>
           {formatPrice(item.basePrice, getAdminIntlLocale(locale))}{" "}
           {i18n("common.currency")}
+          {item.secondaryPriceEnabled && item.secondaryPrice != null ? (
+            <>
+              {" / "}
+              {formatPrice(item.secondaryPrice, getAdminIntlLocale(locale))}{" "}
+              {i18n("common.currency")}
+            </>
+          ) : null}
         </span>
       </TableCell>
       <TableCell className="hidden sm:table-cell">
@@ -397,6 +408,8 @@ const emptyForm = () => ({
   mainImage: "",
   galleryImages: [] as string[],
   basePrice: 0,
+  secondaryPriceEnabled: false,
+  secondaryPrice: 0,
   preparationMinutes: "",
   isActive: true,
   isAvailable: true,
@@ -405,6 +418,8 @@ const emptyForm = () => ({
     name: "",
     description: "",
     ingredients: "",
+    primaryPriceLabel: "",
+    secondaryPriceLabel: "",
   })),
 });
 
@@ -462,6 +477,8 @@ export function ItemManager() {
       mainImage: item.mainImage ?? "",
       galleryImages: JSON.parse(item.galleryImages || "[]"),
       basePrice: item.basePrice,
+      secondaryPriceEnabled: item.secondaryPriceEnabled,
+      secondaryPrice: item.secondaryPrice ?? 0,
       preparationMinutes:
         item.preparationMinutes != null ? String(item.preparationMinutes) : "",
       isActive: item.isActive,
@@ -473,6 +490,8 @@ export function ItemManager() {
           name: tr?.name ?? "",
           description: tr?.description ?? "",
           ingredients: tr?.ingredients ?? "",
+          primaryPriceLabel: tr?.primaryPriceLabel ?? "",
+          secondaryPriceLabel: tr?.secondaryPriceLabel ?? "",
         };
       }),
     });
@@ -492,6 +511,10 @@ export function ItemManager() {
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
       setActiveTab(missing[0]);
+      return;
+    }
+    if (form.secondaryPriceEnabled && form.secondaryPrice <= 0) {
+      toast.error(i18n("items.secondaryPriceRequired"));
       return;
     }
     setErrors({});
@@ -792,6 +815,45 @@ export function ItemManager() {
                   </span>
                 </div>
               </div>
+              <div className="flex items-center justify-between rounded-lg border border-[var(--admin-border)] px-4 py-3">
+                <div>
+                  <Label htmlFor="item-secondary-price-enabled">
+                    {i18n("items.secondaryPriceEnabled")}
+                  </Label>
+                  <p className="text-xs text-[var(--admin-muted)]">
+                    {i18n("items.secondaryPriceEnabledDesc")}
+                  </p>
+                </div>
+                <Switch
+                  id="item-secondary-price-enabled"
+                  checked={form.secondaryPriceEnabled}
+                  onCheckedChange={(secondaryPriceEnabled) =>
+                    setForm({ ...form, secondaryPriceEnabled })
+                  }
+                />
+              </div>
+              {form.secondaryPriceEnabled ? (
+                <div className="space-y-2">
+                  <Label>{i18n("items.secondaryPrice")}</Label>
+                  <div className="relative">
+                    <AdminNumericInput
+                      value={String(form.secondaryPrice)}
+                      onChange={(value) =>
+                        setForm({ ...form, secondaryPrice: Number(value) || 0 })
+                      }
+                      className={cn(locale === "fa" ? "pl-12" : "pr-12")}
+                    />
+                    <span
+                      className={cn(
+                        "absolute top-1/2 -translate-y-1/2 text-sm text-[var(--admin-muted)]",
+                        locale === "fa" ? "left-3" : "right-3"
+                      )}
+                    >
+                      {i18n("common.currency")}
+                    </span>
+                  </div>
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label>{i18n("items.preparationTime")}</Label>
                 <div className="relative">
@@ -877,6 +939,50 @@ export function ItemManager() {
                         <p className="text-xs text-red-500">{errors[trans.language]}</p>
                       )}
                     </div>
+                    {form.secondaryPriceEnabled ? (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>{i18n("items.primaryPriceLabel")}</Label>
+                          <Input
+                            dir={isRtlLanguage(trans.language) ? "rtl" : "ltr"}
+                            placeholder={i18n("items.primaryPriceLabelPlaceholder")}
+                            className={cn(
+                              "text-start",
+                              isRtlLanguage(trans.language) && "font-admin-fa"
+                            )}
+                            value={trans.primaryPriceLabel ?? ""}
+                            onChange={(e) => {
+                              const translations = [...form.translations];
+                              translations[i] = {
+                                ...trans,
+                                primaryPriceLabel: e.target.value,
+                              };
+                              setForm({ ...form, translations });
+                            }}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>{i18n("items.secondaryPriceLabel")}</Label>
+                          <Input
+                            dir={isRtlLanguage(trans.language) ? "rtl" : "ltr"}
+                            placeholder={i18n("items.secondaryPriceLabelPlaceholder")}
+                            className={cn(
+                              "text-start",
+                              isRtlLanguage(trans.language) && "font-admin-fa"
+                            )}
+                            value={trans.secondaryPriceLabel ?? ""}
+                            onChange={(e) => {
+                              const translations = [...form.translations];
+                              translations[i] = {
+                                ...trans,
+                                secondaryPriceLabel: e.target.value,
+                              };
+                              setForm({ ...form, translations });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="space-y-2">
                       <Label>{i18n("items.ingredients")}</Label>
                       <Textarea

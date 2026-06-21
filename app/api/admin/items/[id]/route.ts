@@ -17,6 +17,8 @@ export async function PUT(
     mainImage,
     galleryImages,
     basePrice,
+    secondaryPriceEnabled,
+    secondaryPrice,
     preparationMinutes,
     isActive,
     isAvailable,
@@ -40,6 +42,13 @@ export async function PUT(
           galleryImages: JSON.stringify(galleryImages),
         }),
         ...(basePrice !== undefined && { basePrice: Number(basePrice) }),
+        ...(secondaryPriceEnabled !== undefined && {
+          secondaryPriceEnabled: Boolean(secondaryPriceEnabled),
+          secondaryPrice:
+            secondaryPriceEnabled && secondaryPrice != null && secondaryPrice !== ""
+              ? Number(secondaryPrice)
+              : null,
+        }),
         ...(preparationMinutes !== undefined && {
           preparationMinutes:
             preparationMinutes != null && preparationMinutes !== ""
@@ -57,6 +66,8 @@ export async function PUT(
         name: string;
         description?: string;
         ingredients?: string;
+        primaryPriceLabel?: string;
+        secondaryPriceLabel?: string;
       }>) {
         await tx.itemTranslation.upsert({
           where: { itemId_language: { itemId: id, language: t.language } },
@@ -64,6 +75,10 @@ export async function PUT(
             name: t.name,
             description: t.description ?? null,
             ingredients: t.ingredients ?? null,
+            primaryPriceLabel: t.primaryPriceLabel?.trim() ? t.primaryPriceLabel.trim() : null,
+            secondaryPriceLabel: t.secondaryPriceLabel?.trim()
+              ? t.secondaryPriceLabel.trim()
+              : null,
           },
           create: {
             itemId: id,
@@ -71,6 +86,10 @@ export async function PUT(
             name: t.name,
             description: t.description ?? null,
             ingredients: t.ingredients ?? null,
+            primaryPriceLabel: t.primaryPriceLabel?.trim() ? t.primaryPriceLabel.trim() : null,
+            secondaryPriceLabel: t.secondaryPriceLabel?.trim()
+              ? t.secondaryPriceLabel.trim()
+              : null,
           },
         });
       }

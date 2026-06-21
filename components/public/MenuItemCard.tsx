@@ -1,8 +1,7 @@
 "use client";
 
 import { FadeInImage } from "@/components/FadeInImage";
-import { cn, formatPrice, formatAdminDigits } from "@/lib/utils";
-import { TomanIcon } from "@/components/TomanIcon";
+import { cn, formatAdminDigits } from "@/lib/utils";
 import {
   DiscountPercentBadge,
   ItemTitleRow,
@@ -11,6 +10,7 @@ import {
 import { getEffectiveDiscountPercent } from "@/lib/discount";
 import type { MenuItem } from "@/lib/types";
 import type { ResolvedItemLayout } from "@/lib/category-item-display";
+import { ItemPriceDisplay } from "@/components/public/ItemPriceDisplay";
 import { useLocale } from "next-intl";
 
 interface MenuItemCardProps {
@@ -21,25 +21,15 @@ interface MenuItemCardProps {
 }
 
 function PriceBlock({
-  price,
+  item,
   align,
+  digitLocale,
 }: {
-  price: number;
+  item: MenuItem;
   align: "start" | "end";
+  digitLocale: "fa" | "en";
 }) {
-  return (
-    <div className={cn("shrink-0", align === "end" ? "text-end" : "text-start")}>
-      <div
-        className={cn(
-          "flex items-center gap-0.5 text-[14px] font-bold",
-          align === "end" && "justify-end"
-        )}
-      >
-        {formatPrice(price)}
-        <TomanIcon size={12} className="text-secondary-text" />
-      </div>
-    </div>
-  );
+  return <ItemPriceDisplay item={item} align={align} digitLocale={digitLocale} size="card" />;
 }
 
 function ProductImageBlock({
@@ -99,17 +89,15 @@ function CenterLayout({
   displayName,
   discountPercent,
   digitLocale,
-  price,
 }: {
   item: MenuItem;
   displayName: string;
   discountPercent: number | null;
   digitLocale: "fa" | "en";
-  price: number;
 }) {
   return (
     <>
-      <PriceBlock price={price} align="start" />
+      <PriceBlock item={item} align="start" digitLocale={digitLocale} />
       <ProductImageBlock
         src={item.image}
         alt={displayName}
@@ -135,14 +123,12 @@ function LineLayout({
   displayName,
   discountPercent,
   digitLocale,
-  price,
   imageSide,
 }: {
   item: MenuItem;
   displayName: string;
   discountPercent: number | null;
   digitLocale: "fa" | "en";
-  price: number;
   imageSide: "start" | "end";
 }) {
   const priceAlign = imageSide === "end" ? "start" : "end";
@@ -161,7 +147,9 @@ function LineLayout({
     </div>
   );
 
-  const priceBlock = <PriceBlock price={price} align={priceAlign} />;
+  const priceBlock = (
+    <PriceBlock item={item} align={priceAlign} digitLocale={digitLocale} />
+  );
 
   const imageBlock = (
     <ProductImageBlock
@@ -196,7 +184,6 @@ export function MenuItemCard({
   onClick,
 }: MenuItemCardProps) {
   const locale = useLocale();
-  const price = item.discountedPrice ?? item.price;
   const digitLocale = locale === "fa" || locale === "ar" ? "fa" : "en";
   const displayName = formatAdminDigits(item.name, digitLocale);
   const discountPercent = item.available
@@ -221,7 +208,6 @@ export function MenuItemCard({
           displayName={displayName}
           discountPercent={discountPercent}
           digitLocale={digitLocale}
-          price={price}
         />
       ) : (
         <LineLayout
@@ -229,7 +215,6 @@ export function MenuItemCard({
           displayName={displayName}
           discountPercent={discountPercent}
           digitLocale={digitLocale}
-          price={price}
           imageSide={layout === "line-right" ? "end" : "start"}
         />
       )}
